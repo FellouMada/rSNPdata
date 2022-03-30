@@ -18,13 +18,16 @@ PROCESSED="./DATA"
 #' @param vcf.file the input VCF file
 #' @param meta.file the metadata file
 #' @param output.dir the path to the folder where to store the output files
-#' @param min.mq the minimum MAPQ (read mapping quality) 
-#' @param min.dp the minimum DP (read depth) 
+#' @param min.mq the minimum MAPQ (read mapping quality). default=30
+#' @param min.dp the minimum DP (read depth). default=5
+#' @param variant the variant type you wish to extract. default="SNP"
+#' @param CDS whether to only include variants in coding regions. default=TRUE
+#' @param vqslod minimum vqslod. default=2
 #' @return an object of class SNPdata. 
 #' @details use the print.SNPdata() function to print the created object
 #' @export
 
-snp_get_tables = function(vcf.file=RAW, meta.file=METADATA, output.dir=PROCESSED, min.mq=30, min.dp=4){
+snp_get_tables = function(vcf.file=RAW, meta.file=METADATA, output.dir=PROCESSED, min.mq=30, min.dp=5, variant="SNPS", CDS=TRUE, vqslod=2){
     if(!file.exists(vcf.file)){
         stop(vcf.file, "not found!")
     }
@@ -42,11 +45,11 @@ snp_get_tables = function(vcf.file=RAW, meta.file=METADATA, output.dir=PROCESSED
     
     ## extracting the good quality SNPs 
     filtered = paste0(output.dir,'/','Filtered.vcf.gz')
-    system(sprintf("bcftools view -i'N_ALT=1 && MQ>=%d && FORMAT/DP>=%d' -o %s -Oz %s", min.mq, min.dp, filtered, vcf.file))  #&& VQSLOD>=3
+    system(sprintf("bcftools view --threads 4 -i'--types=\"%s\" && -m2 && -M2 MQ>=%d && FORMAT/DP>=%d && FILTER=\"PASS\" && CDS && VQSLOD>=2' -o %s -Oz %s", variant, min.mq, min.dp, filtered, vcf.file))  #&& VQSLOD>=3
     
     ## extracting the genotype data
     genotypes = paste0(output.dir,'/','Genotypes.txt')
-    expression = '%CHROM\t%POS\t%REF\t%ALT\t%VQSLOD[\t%GT]\n'
+    expression = '%CHROM\t%POS\t%REF\t%ALT\t%QUAL[\t%GT]\n'
     system(sprintf("bcftools query -f'%s' %s > %s", expression, filtered, genotypes))
     genotypeF = fread(genotypes, header = FALSE, nThread = 4)
     names(genotypeF) = c("Chrom","Pos","Ref","Alt","Qual",sampleIDs$V1)
@@ -64,7 +67,7 @@ snp_get_tables = function(vcf.file=RAW, meta.file=METADATA, output.dir=PROCESSED
     meta$percentage.missing.sites = colSums(is.na(snps))/nrow(snps)
     details$percentage.missing.samples = rowSums(is.na(snps))/ncol(snps)
     
-    snp.table = list(meta, details, snps, filtered)
+    snp.table = list(meta, details, snps, filtered, index=0)
     names(snp.table) = c("meta","details","GT","vcf")
     class(snp.table)="SNPdata"
     snp.table
@@ -97,24 +100,24 @@ print.SNPdata=function(snpdata){
 #' 
 #' This function generate the input data needed for whole genome SNP data genotyped from malaria parasite 
 #' @param snpdata a SNPdata object
-#' @param min.qual.score the minimum quality score below which a loci will be discarded. default=2
+#' @param min.qual the minimum call quality score below which a loci will be discarded. default=10
 #' @param max.missing.sites the maximum fraction of missing sites above which a sample should be discarded. default=0.2  
 #' @param max.missing.samples the maximum fraction of missing samples above which a loci should be discarded. default=0.2  
 #' @param maf.cutoff the MAF cut-off. loci with a MAF < maf.cutoff will be discarded
 #' @return a SNPdata object
 #' @details 
 #' @export
-filter_snps_samples=function (snpdata, min.qual.score=2, max.missing.sites=0.2, max.missing.samples=0.2, maf.cutoff=0.01){
+filter_snps_samples=function (snpdata, min.qual=10, max.missing.sites=0.2, max.missing.samples=0.2, maf.cutoff=0.01){
     x=snpdata$details
-    if (missing(min.qual.score) && missing(max.missing.sites) && missing(max.missing.samples)) 
+    if (missing(min.qual) && missing(max.missing.sites) && missing(max.missing.samples)) 
         return(snpdata)
     else {
-        idx = which(x$Qual >= min.qual.score && x$percentage.missing.samples <= max.missing.samples && x$MAF >= maf.cutoff)
+        idx = which(x$Qual >= min.qual && x$percentage.missing.samples <= max.missing.samples && x$MAF >= maf.cutoff)
         if(length(idx)>0 && length(idx)<nrow(x)){
             x = x[idx,]
             f2c = x %>% subset(Chrom, Pos)
             fwrite(f2c, paste0(output.dir,"/loci_to_be_retained.txt"), col.names = FALSE, row.names = FALSE, quote = FALSE, sep = "\t", nThread = 4)
-            snpdata$vcf = remove_snps_from_vcf(snpdata$vcf, "loci_to_be_retained.txt", output.dir)
+            snpdata$vcf = remove_snps_from_vcf(snpdata$vcf, "loci_to_be_retained.txt", output.dir, index = snpdata$index)
         }else if(length(idx)==0){
             stop("No locus in VCF file has satisfied specified the QC metrics")
         }else if(length(idx)==nrow(x)){
@@ -125,7 +128,7 @@ filter_snps_samples=function (snpdata, min.qual.score=2, max.missing.sites=0.2, 
         if(length(idx)>0 && length(idx)<nrow(snpdata$meta)){
             x = x[,idx]
             fwrite(snpdata$meta$sample[idx], paste0(output.dir,"/samples_to_be_dropped.txt"), col.names = FALSE, row.names = FALSE, quote = FALSE, sep = "\t", nThread = 4)
-            snpdata$vcf = remove_samples_from_vcf(snpdata$vcf, "samples_to_be_dropped.txt", output.dir)
+            snpdata$vcf = remove_samples_from_vcf(snpdata$vcf, "samples_to_be_dropped.txt", output.dir, index = snpdata$index)
         }else if(length(idx)==0){
             stop("No sample in VCF file has satisfied the specified QC metrics")
         }else if(length(idx)==nrow(x)){
@@ -133,32 +136,8 @@ filter_snps_samples=function (snpdata, min.qual.score=2, max.missing.sites=0.2, 
         }
     }
     snpdata$details = x
+    snpdata$index=snpdata$index+1
     snpdata
-}
-
-remove_snps_from_vcf = function(vcf, loci_to_be_retained, path){
-    target.loci = paste0(path,"/",loci_to_be_retained)
-    header = paste0(path,'/','Header.txt')
-    body = paste0(path,'/','Body.txt')
-    correctRows = paste0(path,'/','Good_snps.txt')
-    filteredVcf = paste0(path,'/','Filtered_snps.vcf')
-    
-    system(sprintf("bcftools view -h %s > %s", vcf, header))
-    system(sprintf("bcftools view -H %s > %s", vcf, body))
-    system(sprintf("awk -F'\t' 'NR==FNR{c[$1$2]++;next};c[$1$2] > 0' %s %s > %s",target.loci,body,correctRows))
-    system(sprintf("cat %s %s > %s", header, correctRows, filteredVcf))
-    system(sprintf("bgzip %s", filteredVcf))
-    system(sprintf("rm -f %s %s %s", header, body, correctRows))
-    return(as.character(filteredVcf))
-}
-
-remove_samples_from_vcf = function(vcf, samples.to.be.retained, path){
-    target.samples = paste0(path,"/",samples.to.be.retained)
-    post.qc = paste0(path,'/','Post_QC.vcf.gz')
-    system(sprintf("bcftools view -S %s %s -o %s -O z", target.samples, vcf, post.qc))
-    system(sprintf("rm -f %s", vcf))
-    system(sprintf("tabix %s", post.qc))
-    return(as.character(post.qc))
 }
 
 #' Calculate minor allele frequency (MAF)
@@ -329,7 +308,7 @@ phaseData = function(depth, genotype){
 
 #' Impute missing genotypes
 #' 
-#' missing genotype imputation based on the MAF 
+#' missing genotype imputation based on the MAF at any given locus 
 #' @param snpdata a SNPdata object
 #' @return a SNPdata object with an additional table named as "Phased" 
 #' @details when both alleles are not supported by any read or the total number of reads supporting both alleles at a given site is < 5, the genotype will be phased based on a bernouli distribition using the MAF as a parameter. Similarly, when the total number of reads is > 5 and the number of reads supporting one of the allele is not 2 times the number of the other allele, the genotype is phased using a bernouli distribution
@@ -338,39 +317,149 @@ impute_missing_genotypes = function(snpdata){
     if(!("Phased"%in%names(snpdata))){
         message("Phasing the mixte genotypes...")
         snpdata = phase_mixed_genotypes(snpdata)
-    }else{
-        genotype = snpdata[["Phased"]]
     }
-    
-    
+    genotype = snpdata[["Phased"]]
+    path = paste0(dirname(vcf),"/imputing")
+    system(sprintf("mkdir -p %s", path))
+    correlations = numeric(length = 100)
+    for(i in 1:100){
+        tmp.snpdata = snpdata
+        mat = apply(tmp.snpdata[["Phased"]], 1, impute, mc.cores=4)
+        tmp.snpdata[["Phased_Imputed"]]=mat
+        saveRDS(mat, paste0(path,"/sim",i,".RDS"))
+        res.snpdata = compute_MAF(tmp.snpdata, include.het=FALSE, mat.name="Phased_Imputed")
+        correlations[i] = cor(res.snpdata$details[["MAF_Phased_Imputed"]], res.snpdata$details[["MAF"]])
+    }
+    idx = which(correlations==max(correlations,na.rm = TRUE))
+    snpdata[["Phased_Imputed"]] = readRDS(paste0(path,"/sim",idx[1],".RDS"))
+    system(sprintf("rm -rf %s", path))
+    snpdata
 }
 
 impute = function(genotype){
-    idx = which(genotype)
+    idx = which(genotype==2)
+    for(j in idx){
+        ref = length(which(genotype==0))
+        alt = length(which(genotype==1))
+        if(ref<alt) maf=ref/(ref+alt)
+        else maf=alt/(ref+alt)
+        genotype[j] = rbern(1, maf)
+    }
+    genotype
 }
 
+#' Select data from specified chromosomes
+#' 
+#' return data for specified chromosomes only 
+#' @param snpdata a SNPdata object
+#' @param chrom a comma-separated list of chromosomes
+#' @return a SNPdata object with only the data from the specified chromosomes
+#' @details 
+#' @export
 select_chrom = function(snpdata, chrom="all"){
+    m = which(names(snpdata) %in% c("meta","vcf"))
+    fields = names(snpdata)[-m]
     if(chrom=="all"){
         return(snpdata)
+    }else{
+        chrom = as.character(unlist(strsplit(chrom,",")))
     }
-    idx = which(snpdata$details$Chrom==chrom)
-    chrom.snpdata = snpdata
-    chrom.snpdata$details = chrom.snpdata$details[idx,]
-    chrom.snpdata$GT = chrom.snpdata$GT[idx,]
-    chrom.num = as.character(unlist(strsplit(chrom,"_"))[2])
-    chrom.vcf = paste0(dirname(chrom.snpdata$vcf),"/Chrom",chrom.num,".vcf.gz")
-    system(sprintf("bcftools view -r\"%s\" %s -o %s -O z", chrom, chrom.snpdata$vcf, chrom.vcf))
-    chrom.snpdata$vcf = chrom.vcf
-    chrom.snpdata
+    res = list()
+    for(chr in chrom){
+        chrom.snpdata = snpdata
+        idx = which(chrom.snpdata$details$Chrom==chr)
+        for(field in fields){
+            res[[field]] = rbind(res[[field]], chrom.snpdata[[field]][idx,])
+        }
+    }
+    chrom.vcf = paste0(dirname(chrom.snpdata$vcf),"/target_chrom.vcf.gz")
+    if(length(chrom)>1){
+        tmp.xme = paste0(dirname(chrom.snpdata$vcf),"/target_chrom.txt")
+        fwrite(chrom, tmp.xme, col.names = FALSE, row.names = FALSE, quote = FALSE, sep = "\t")
+        system(sprintf("bcftools view -R %s %s -o %s -O z", tmp.xme, chrom.snpdata$vcf, chrom.vcf))
+    }else{
+        system(sprintf("bcftools view -r\"%s\" %s -o %s -O z", chrom, chrom.snpdata$vcf, chrom.vcf))
+    }
+    res$vcf = chrom.vcf
+    res$meta = snpdata$meta
+    res
 }
 
+#' Drop set a SNPs 
+#' 
+#' remove a set of SNPs from the SNPdata object
+#' @param snpdata a SNPdata object
+#' @param snp.to.be.dropped a data frame with 2 columns "Chrom" and "Pos"
+#' @return a SNPdata object where the specified SNPs have been removed
+#' @export
 drop_snps = function(snpdata, snp.to.be.dropped){
+    if(is.data.frame(snp.to.be.dropped) && names(snp.to.be.dropped)%in%c("Chrom","Pos")){
+        idx = which(snpdata$details$Chrom%in%snp.to.be.dropped$Chrom && snpdata$details$Pos%in%snp.to.be.dropped$Pos)
+        m = which(names(snpdata) %in% c("meta","vcf"))
+        fields = names(snpdata)[-m]
+        for(field in fields){
+            snpdata[[field]] = snpdata[[field]][-idx]
+        }
+        f2c = snpdata$details %>% select(Chrom,Pos)
+        tmp.file = paste0(dirname(snpdata$vcf),"/tmp.txt")
+        fwrite(f2c, tmp.file, col.names = FALSE, row.names = FALSE, quote = FALSE, sep = "\t", nThread = 4)
+        snpdata$vcf = remove_snps_from_vcf(snpdata$vcf, "tmp.txt", path=dirname(snpdata$vcf))
+    }else{
+        stop("value for 'snp.to.be.dropped' argument should a data frame whith Chrom and Pos columns.")
+    }
+    snpdata
+}
+
+remove_snps_from_vcf = function(vcf, loci_to_be_retained, path, index=1){
+    target.loci = paste0(path,"/",loci_to_be_retained)
+    header = paste0(path,'/','Header.txt')
+    body = paste0(path,'/','Body.txt')
+    correctRows = paste0(path,'/','Good_snps.txt')
+    filteredVcf = paste0(path,'/','Filtered_snps_',index,'.vcf')
+    
+    system(sprintf("bcftools view -h %s > %s", vcf, header))
+    system(sprintf("bcftools view -H %s > %s", vcf, body))
+    system(sprintf("awk -F'\t' 'NR==FNR{c[$1$2]++;next};c[$1$2] > 0' %s %s > %s",target.loci,body,correctRows))
+    system(sprintf("cat %s %s > %s", header, correctRows, filteredVcf))
+    system(sprintf("bgzip %s", filteredVcf))
+    system(sprintf("rm -f %s %s %s", header, body, correctRows))
+    return(as.character(filteredVcf))
+}
+
+#' Drop samples  
+#' 
+#' remove a set of samples from the SNPdata object
+#' @param snpdata a SNPdata object
+#' @param samples.to.be.dropped a vector of samples to be dropped
+#' @return a SNPdata object where the specified samples have been removed
+#' @export
+drop_samples = function(snpdata, samples.to.be.dropped){
+    if(length(samples.to.be.dropped)==0 || samples.to.be.dropped %in%snpdata$meta$sample){
+        stop("no provided samples or provided samples not found!")
+    }
+    idx = match(samples.to.be.dropped, snpdata$meta$sample)
+    snpdata$meta$sample = snpdata$meta$sample[-idx]
+    m = which(names(snpdata) %in% c("details","vcf","meta"))
+    fields = names(snpdata)[-m]
+    for(field in fields){
+        idx = match(samples.to.be.dropped, colnames(snpdata[[field]]))
+        snpdata[[field]] = snpdata[[field]][,-idx]
+    }
+    tmp.file = paste0(dirname(snpdata$vcf),"/tmp.txt")
+    fwrite(samples.to.be.dropped, tmp.file, col.names = FALSE, row.names = FALSE, quote = FALSE, sep = "\t", nThread = 4)
+    snpdata$vcf = remove_samples_from_vcf(snpdata$vcf, "tmp.txt", path=dirname(snpdata$vcf))
     
 }
 
-drop_samples = function(snpdata, samples.to.be.dropped){
-    
+remove_samples_from_vcf = function(vcf, samples.to.be.retained, path, index=1){
+    target.samples = paste0(path,"/",samples.to.be.retained)
+    post.qc = paste0(path,'/','Post_QC_',index,'.vcf.gz')
+    system(sprintf("bcftools view -S %s %s -o %s -O z", target.samples, vcf, post.qc))
+    system(sprintf("rm -f %s", vcf))
+    system(sprintf("tabix %s", post.qc))
+    return(as.character(post.qc))
 }
+
 
 
 
