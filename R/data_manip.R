@@ -22,7 +22,7 @@ PROCESSED="./DATA"
 #' @details use the print.SNPdata() function to print the created object
 #' @export
 
-generate_snpdata = function(vcf.file=NA, meta.file=NA, output.dir=NA){
+get_snpdata = function(vcf.file=NA, meta.file=NA, output.dir=NA){
     if(is.na(vcf.file)) stop("Please provide an input VCF file")
     if(!file.exists(vcf.file)) stop(vcf.file, "not found!")
     if(is.na(meta.file)) stop("Please provide a metadata file")
