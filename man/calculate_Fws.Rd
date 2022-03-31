@@ -10,7 +10,7 @@ snpdata =  calculate_Fws(snpdata)
 \item{snpdata}{a SNPdata object}
 }
 \value{
-a SNPdata object with an additional column in the meta table 
+a SNPdata object with an additional column in the meta table
 \describe{
   \item{Fws}{within host genetic diversity value}
 }

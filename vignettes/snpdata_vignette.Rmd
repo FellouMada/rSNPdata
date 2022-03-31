@@ -45,6 +45,7 @@ include.het determines whether to account for heterozygous sites in MAF calculat
 type `?compute_MAF` for more details     
 ```{r, eval=FALSE}
 snpdata = compute_MAF(snpdata, include.het=FALSE, mat.name="GT")
+head(snpdata$details)
 ```
 
 ## calculate the within-host genetics diversity index (Fws)   
@@ -52,30 +53,35 @@ the `calculate_Fws` function requires a SNPdata object
 type `?compute_MAF` for more details     
 ```{r, eval=FALSE}
 snpdata =  calculate_Fws(snpdata)
+head(snpdata$meta)
 ```
 
 ## filter the SNPdata object     
 use the `filter_snps_samples` function to remove the SNPs and samples that do not satisfy the user criteria.    
 ```{r eval=FALSE}
 snpdata = filter_snps_samples(snpdata, min.qual=10, max.missing.sites=0.2, max.missing.samples=0.2, maf.cutoff=0.01)
+print(snpdata)
 ```
 
 ## mixed genotypes phasing     
 use the `phase_mixed_genotypes` function to phase the mixed genotypes    
 ```{ r eval=FALSE}
 snpdata = phase_mixed_genotypes(snpdata)
+head(snpdata$Phased[,1:5])
 ```
 
 ## impute the missing data   
 use the `impute_missing_genotypes` function to impute the missing genotypes. the `genotype` argument determines which genotype table should be used to impute the missing data ("GT" to impute from raw data, "Phased" to impute from the phased data).    
 ```{r eval=FALSE}
 snpdata = impute_missing_genotypes(snpdata, genotype="GT")
+head(snpdata$Imputed[,1:5])
 ```
 
 ## select data for a given chromosome     
 to get the data from chromosome 7 ("Pf3D7_07_v3"), use the `select_chrom`    
 ```{r eval=FALSE}
 chrom7_snpdata = select_chrom(snpdata, chrom="Pf3D7_07_v3")
+print(chrom7_snpdata)
 ```
 
 ## drop a set of SNPs from the data       
@@ -85,6 +91,7 @@ snp.to.be.dropped = chrom7_snpdata$details %>% select(Chrom,Pos)
 idx = sample(1:nrow(snp.to.be.dropped),100, replace = FALSE)
 snp.to.be.dropped = snp.to.be.dropped[idx,]
 reduced_snpdata = drop_snps(chrom7_snpdata, snp.to.be.dropped)
+print(reduced_snpdata)
 ```
 
 ## drop a set of samples from the data       
@@ -93,6 +100,7 @@ if you want to remove some samples from the data, use the `drop_samples` functio
 idx = sample(1:nrow(reduced_snpdata$meta),10, replace = FALSE)
 samples.to.be.dropped = reduced_snpdata$meta$sample[idx]
 reduced_snpdata = drop_samples(reduced_snpdata, samples.to.be.dropped)
+print(reduced_snpdata)
 ```
 
 

@@ -7,8 +7,8 @@ require("statip")
 require("parallel")
 
 #' Generate the SNPdata object
-#' 
-#' This function generate the input data needed for whole genome SNP data genotyped from malaria parasite 
+#'
+#' This function generate the input data needed for whole genome SNP data genotyped from malaria parasite
 #' @param vcf.file the input VCF file
 #' @param meta.file the metadata file
 #' @param output.dir the path to the folder where to store the output files
@@ -31,23 +31,23 @@ get_snpdata = function(vcf.file=NA, meta.file=NA, output.dir=NA){
     if(!file.exists(meta.file)) stop(meta.file, "not found!")
     if(is.na(output.dir)) stop("Please provide an output directory")
     if(!dir.exists(output.dir)) stop(output.dir, "not found!")
-    
+
     ## get the sample IDs
     ids = paste0(output.dir,'/','SampleIDs.txt')
     system(sprintf("bcftools query -l %s > %s", vcf.file, ids))
     sampleIDs = fread(ids, header = FALSE)
-    
-    ## extracting the good quality SNPs 
+
+    ## extracting the good quality SNPs
     # filtered = paste0(output.dir,'/','Filtered.vcf.gz')
     # system(sprintf("bcftools view --threads 4 -i'N_ALT=1 && TYPE=\"%s\" && MQ>=%d && FORMAT/DP>=%d && FILTER=\"PASS\" && CDS && VQSLOD>=2' -o %s -Oz %s", variant, min.mq, min.dp, filtered, vcf.file))  #&& VQSLOD>=3
-    
+
     ## extracting the genotype data
     genotypes = paste0(output.dir,'/','Genotypes.txt')
     expression = '%CHROM\t%POS\t%REF\t%ALT\t%QUAL[\t%GT]\n'
     system(sprintf("bcftools query -f'%s' %s > %s", expression, vcf.file, genotypes))
     genotypeF = fread(genotypes, header = FALSE, nThread = 4)
     names(genotypeF) = c("Chrom","Pos","Ref","Alt","Qual",sampleIDs$V1)
-    
+
     ## the tables
     details = genotypeF %>% select(Chrom,Pos,Ref,Alt,Qual)
     names(sampleIDs) = "sample"
@@ -60,7 +60,7 @@ get_snpdata = function(vcf.file=NA, meta.file=NA, output.dir=NA){
     meta = add_metadata(sampleIDs,meta.file)
     meta$percentage.missing.sites = colSums(is.na(snps))/nrow(snps)
     details$percentage.missing.samples = rowSums(is.na(snps))/ncol(snps)
-    
+
     snp.table = list(meta, details, snps, vcf.file, index=0)
     names(snp.table) = c("meta","details","GT","vcf","index")
     class(snp.table)="SNPdata"
@@ -90,12 +90,12 @@ print.SNPdata=function(snpdata){
 }
 
 #' Filter loci and samples (requires bcftools and tabix to be installed)
-#' 
-#' This function generate the input data needed for whole genome SNP data genotyped from malaria parasite 
+#'
+#' This function generate the input data needed for whole genome SNP data genotyped from malaria parasite
 #' @param snpdata a SNPdata object
 #' @param min.qual the minimum call quality score below which a loci will be discarded. default=10
-#' @param max.missing.sites the maximum fraction of missing sites above which a sample should be discarded. default=0.2  
-#' @param max.missing.samples the maximum fraction of missing samples above which a loci should be discarded. default=0.2  
+#' @param max.missing.sites the maximum fraction of missing sites above which a sample should be discarded. default=0.2
+#' @param max.missing.samples the maximum fraction of missing samples above which a loci should be discarded. default=0.2
 #' @param maf.cutoff the MAF cut-off. loci with a MAF < maf.cutoff will be discarded
 #' @return a SNPdata object
 #' @usage snpdata = filter_snps_samples(snpdata, min.qual=10, max.missing.sites=0.2, max.missing.samples=0.2, maf.cutoff=0.01)
@@ -103,7 +103,7 @@ print.SNPdata=function(snpdata){
 filter_snps_samples=function (snpdata, min.qual=10, max.missing.sites=0.2, max.missing.samples=0.2, maf.cutoff=0.01){
     x=snpdata$details
     fields = c("GT","Phased","Phased_Imputed")
-    if (missing(min.qual) & missing(max.missing.sites) & missing(max.missing.samples)) 
+    if (missing(min.qual) & missing(max.missing.sites) & missing(max.missing.samples))
         return(snpdata)
     else {
         idx = which(x$Qual >= min.qual & x$percentage.missing.samples <= max.missing.samples & x$MAF >= maf.cutoff)
@@ -124,7 +124,7 @@ filter_snps_samples=function (snpdata, min.qual=10, max.missing.sites=0.2, max.m
         }else if(length(idx)==nrow(snpdata$details)){
             message("all loci have satisfied the specified QC metrics")
         }
-        
+
         idx = which(snpdata$meta$percentage.missing.sites<=max.missing.sites)
         if(length(idx)>0 & length(idx)<nrow(snpdata$meta)){
             cat("the following samples will be removed: \n",paste(snpdata$meta$sample,collapse = "\n"))
@@ -138,18 +138,18 @@ filter_snps_samples=function (snpdata, min.qual=10, max.missing.sites=0.2, max.m
             message("all samples have satisfied the specified QC metrics")
         }
     }
-    
+
     snpdata$index=snpdata$index+1
     snpdata
 }
 
 #' Calculate minor allele frequency (MAF)
-#' 
-#' Uses the SNPdata object to calculate the MAF at every loci 
+#'
+#' Uses the SNPdata object to calculate the MAF at every loci
 #' @param snpdata a SNPdata object
 #' @param include.het whether to account for the heterozygous allele or not. this is only used when mat.name="GT"
 #' @param mat.name the name of the matrix to use. default is "GT"
-#' @return a SNPdata object with 2 additional columns in the details data frame 
+#' @return a SNPdata object with 2 additional columns in the details data frame
 #' \describe{
 #'   \item{MAF}{minor allele frequency of each snps}
 #'   \item{MAF_allele}{1 if the alternate allele is the minor allele. 0 otherwise}
@@ -201,7 +201,7 @@ getMaf = function(mat){
             minor = mat[2]
             allele = 3
         }
-        
+
         if(minor<mat[3]){
             maf = minor/sum(mat[1],mat[2],mat[3])
             allele = 3
@@ -218,10 +218,10 @@ getMaf = function(mat){
 
 
 #' Calculate the complexity of infection in every sample (Fws)
-#' 
+#'
 #' Fws is the within host genetic diversity
 #' @param snpdata a SNPdata object
-#' @return a SNPdata object with an additional column in the meta table 
+#' @return a SNPdata object with an additional column in the meta table
 #' \describe{
 #'   \item{Fws}{within host genetic diversity value}
 #' }
@@ -230,13 +230,13 @@ getMaf = function(mat){
 calculate_Fws = function(snpdata){
     vcf = snpdata$vcf
     gdsFile = paste0(dirname(vcf),'/','data.gds')  #
-    seqVCF2GDS(vcf, gdsFile)  
-    my_vcf = seqOpen(gdsFile)     
+    seqVCF2GDS(vcf, gdsFile)
+    my_vcf = seqOpen(gdsFile)
     # seqSummary(my_vcf)
-    sample.id = seqGetData(my_vcf, "sample.id")     
-    coords = getCoordinates(my_vcf)      
-    seqSetFilter(my_vcf, variant.id = coords$variant.id[coords$chromosome != "Pf3D7_API_v3"])     
-    seqSetFilter(my_vcf, variant.id = coords$variant.id[coords$chromosome != "Pf_M76611"])      
+    sample.id = seqGetData(my_vcf, "sample.id")
+    coords = getCoordinates(my_vcf)
+    seqSetFilter(my_vcf, variant.id = coords$variant.id[coords$chromosome != "Pf3D7_API_v3"])
+    seqSetFilter(my_vcf, variant.id = coords$variant.id[coords$chromosome != "Pf_M76611"])
     fws_overall = getFws(my_vcf)      #estimate the MOI
     fws_overall = data.table(cbind(as.character(sample.id), as.numeric(fws_overall)))
     names(fws_overall) = c("sample","Fws")
@@ -246,10 +246,10 @@ calculate_Fws = function(snpdata){
 }
 
 #' Phase mixed genotypes
-#' 
-#' mixed genotype phasing based on the number of reads supporting each allele of the heterozygous site. Simulation is performed 100 times 
+#'
+#' mixed genotype phasing based on the number of reads supporting each allele of the heterozygous site. Simulation is performed 100 times
 #' @param snpdata a SNPdata object
-#' @return a SNPdata object with an additional table named as "Phased". this will contain the phased genotypes 
+#' @return a SNPdata object with an additional table named as "Phased". this will contain the phased genotypes
 #' @details when both alleles are not supported by any read or the total number of reads supporting both alleles at a given site is < 5, the genotype will be phased based on a bernouli distribition using the MAF as a parameter. Similarly, when the total number of reads is > 5 and the number of reads supporting one of the allele is not 2 times the number of the other allele, the genotype is phased using a bernouli distribution
 #' @usage snpdata = phase_mixed_genotypes(snpdata)
 #' @export
@@ -282,10 +282,10 @@ phase_mixed_genotypes = function(snpdata){
 
 phaseData = function(genotype, depth){
     idx = which(genotype==2)
-    
+
     for(j in idx){
         ref = as.numeric(unlist(strsplit(depth[j],','))[1])
-        alt = as.numeric(unlist(strsplit(depth[j],','))[2]) 
+        alt = as.numeric(unlist(strsplit(depth[j],','))[2])
         if(ref==0 & alt==0){
             ref.count=sum(genotype==0, na.rm = TRUE)
             alt.count=sum(genotype==1, na.rm = TRUE)
@@ -322,11 +322,11 @@ phaseData = function(genotype, depth){
 
 
 #' Impute missing genotypes
-#' 
-#' missing genotype imputation based on the MAF at any given locus 
+#'
+#' missing genotype imputation based on the MAF at any given locus
 #' @param snpdata a SNPdata object
 #' @param genotype the genotype table from which the missing data will be imputed
-#' @return a SNPdata object with an additional table named as "Phased_Imputed" 
+#' @return a SNPdata object with an additional table named as "Phased_Imputed"
 #' @details when both alleles are not supported by any read or the total number of reads supporting both alleles at a given site is < 5, the genotype will be phased based on a bernouli distribition using the MAF as a parameter. Similarly, when the total number of reads is > 5 and the number of reads supporting one of the allele is not 2 times the number of the other allele, the genotype is phased using a bernouli distribution
 #' @usage snpdata = impute_missing_genotypes(snpdata)
 #' @export
@@ -365,8 +365,8 @@ impute = function(genotype){
 }
 
 #' Select data from specified chromosomes
-#' 
-#' return data for specified chromosomes only 
+#'
+#' return data for specified chromosomes only
 #' @param snpdata a SNPdata object
 #' @param chrom a vector of chromosomes
 #' @return a SNPdata object with only the data from the specified chromosomes
@@ -400,11 +400,12 @@ select_chrom = function(snpdata, chrom="all"){
     }
     res$vcf = chrom.vcf
     res$meta = snpdata$meta
+    class(res)="SNPdata"
     res
 }
 
-#' Drop set a SNPs 
-#' 
+#' Drop set a SNPs
+#'
 #' remove a set of SNPs from the SNPdata object
 #' @param snpdata a SNPdata object
 #' @param snp.to.be.dropped a data frame with 2 columns "Chrom" and "Pos"
@@ -436,7 +437,7 @@ remove_snps_from_vcf = function(vcf, loci_to_be_retained, path, index=1){
     body = paste0(path,'/','Body.txt')
     correctRows = paste0(path,'/','Good_snps.txt')
     filteredVcf = paste0(path,'/','Filtered_snps_',index,'.vcf')
-    
+
     system(sprintf("bcftools view -h %s > %s", vcf, header))
     system(sprintf("bcftools view -H %s > %s", vcf, body))
     system(sprintf("awk -F'\t' 'NR==FNR{c[$1$2]++;next};c[$1$2] > 0' %s %s > %s",target.loci,body,correctRows))
@@ -446,8 +447,8 @@ remove_snps_from_vcf = function(vcf, loci_to_be_retained, path, index=1){
     return(as.character(filteredVcf))
 }
 
-#' Drop samples  
-#' 
+#' Drop samples
+#'
 #' remove a set of samples from the SNPdata object
 #' @param snpdata a SNPdata object
 #' @param samples.to.be.dropped a vector of samples to be dropped
