@@ -65,7 +65,7 @@ print(snpdata)
 
 ## mixed genotypes phasing     
 use the `phase_mixed_genotypes` function to phase the mixed genotypes    
-```{ r eval=FALSE}
+```{r eval=FALSE}
 snpdata = phase_mixed_genotypes(snpdata)
 head(snpdata$Phased[,1:5])
 ```
