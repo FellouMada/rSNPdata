@@ -18,25 +18,17 @@ PROCESSED="./DATA"
 #' @param vcf.file the input VCF file
 #' @param meta.file the metadata file
 #' @param output.dir the path to the folder where to store the output files
-#' @param min.mq the minimum MAPQ (read mapping quality). default=30
-#' @param min.dp the minimum DP (read depth). default=5
-#' @param variant the variant type you wish to extract. default="SNP"
-#' @param CDS whether to only include variants in coding regions. default=TRUE
-#' @param vqslod minimum vqslod. default=2
 #' @return an object of class SNPdata. 
 #' @details use the print.SNPdata() function to print the created object
 #' @export
 
-snp_get_tables = function(vcf.file=RAW, meta.file=METADATA, output.dir=PROCESSED, min.mq=30, min.dp=5, variant="SNPS", CDS=TRUE, vqslod=2){
-    if(!file.exists(vcf.file)){
-        stop(vcf.file, "not found!")
-    }
-    if(!file.exists(meta.file)){
-        stop(meta.file, "not found!")
-    }
-    if(!dir.exists(output.dir)){
-        stop(output.dir, "not found!")
-    }
+generate_snpdata = function(vcf.file=NA, meta.file=NA, output.dir=NA){
+    if(is.na(vcf.file)) stop("Please provide an input VCF file")
+    if(!file.exists(vcf.file)) stop(vcf.file, "not found!")
+    if(is.na(meta.file)) stop("Please provide a metadata file")
+    if(!file.exists(meta.file)) stop(meta.file, "not found!")
+    if(is.na(output.dir)) stop("Please provide an output directory")
+    if(!dir.exists(output.dir)) stop(output.dir, "not found!")
     
     ## get the sample IDs
     ids = paste0(output.dir,'/','SampleIDs.txt')
@@ -44,13 +36,13 @@ snp_get_tables = function(vcf.file=RAW, meta.file=METADATA, output.dir=PROCESSED
     sampleIDs = fread(ids, header = FALSE)
     
     ## extracting the good quality SNPs 
-    filtered = paste0(output.dir,'/','Filtered.vcf.gz')
-    system(sprintf("bcftools view --threads 4 -i'--types=\"%s\" && -m2 && -M2 MQ>=%d && FORMAT/DP>=%d && FILTER=\"PASS\" && CDS && VQSLOD>=2' -o %s -Oz %s", variant, min.mq, min.dp, filtered, vcf.file))  #&& VQSLOD>=3
+    # filtered = paste0(output.dir,'/','Filtered.vcf.gz')
+    # system(sprintf("bcftools view --threads 4 -i'N_ALT=1 && TYPE=\"%s\" && MQ>=%d && FORMAT/DP>=%d && FILTER=\"PASS\" && CDS && VQSLOD>=2' -o %s -Oz %s", variant, min.mq, min.dp, filtered, vcf.file))  #&& VQSLOD>=3
     
     ## extracting the genotype data
     genotypes = paste0(output.dir,'/','Genotypes.txt')
     expression = '%CHROM\t%POS\t%REF\t%ALT\t%QUAL[\t%GT]\n'
-    system(sprintf("bcftools query -f'%s' %s > %s", expression, filtered, genotypes))
+    system(sprintf("bcftools query -f'%s' %s > %s", expression, vcf.file, genotypes))
     genotypeF = fread(genotypes, header = FALSE, nThread = 4)
     names(genotypeF) = c("Chrom","Pos","Ref","Alt","Qual",sampleIDs$V1)
     
@@ -63,18 +55,18 @@ snp_get_tables = function(vcf.file=RAW, meta.file=METADATA, output.dir=PROCESSED
     snps[snps=="0/1" || snps=="1/0"]="2"
     snps[snps=="./." || snps==".|."]=NA
     snps=apply(snps, 2, function(x) as.integer(x))
-    meta = add_metadata(sampleIDs,meta.file,METADATA)
+    meta = add_metadata(sampleIDs,meta.file)
     meta$percentage.missing.sites = colSums(is.na(snps))/nrow(snps)
     details$percentage.missing.samples = rowSums(is.na(snps))/ncol(snps)
     
-    snp.table = list(meta, details, snps, filtered, index=0)
-    names(snp.table) = c("meta","details","GT","vcf")
+    snp.table = list(meta, details, snps, vcf.file, index=0)
+    names(snp.table) = c("meta","details","GT","vcf","index")
     class(snp.table)="SNPdata"
     snp.table
 }
 
-add_metadata = function(sampleIDs, meta.file, METADATA){
-    meta = fread(paste0(METADATA,"/",meta.file), key = "sample")
+add_metadata = function(sampleIDs, metadata){
+    meta = fread(metadata, key = "sample")
     setkey(sampleIDs, "sample")
     samples=meta$sample
     if(any(!(samples %in% sampleIDs$sample))){
@@ -89,7 +81,6 @@ add_metadata = function(sampleIDs, meta.file, METADATA){
 #' @return NULL
 #' @export
 print.SNPdata=function(snpdata){
-    cat("Data for:\n")
     print(head(snpdata$meta))
     print(head(snpdata$details))
     cat(sprintf("Data contains: %d samples for %d snp loci\n",dim(snpdata$GT)[2],dim(snpdata$GT)[1]))
