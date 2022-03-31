@@ -4,7 +4,7 @@
 \alias{get_snpdata}
 \title{Generate the SNPdata object}
 \usage{
-get_snpdata(vcf.file = NA, meta.file = NA, output.dir = NA)
+snpdata=get_snpdata(vcf.file = "file.vcf.gz", meta.file = "file.txt", output.dir = "/path/to/output/dir")
 }
 \arguments{
 \item{vcf.file}{the input VCF file}
@@ -14,11 +14,18 @@ get_snpdata(vcf.file = NA, meta.file = NA, output.dir = NA)
 \item{output.dir}{the path to the folder where to store the output files}
 }
 \value{
-an object of class SNPdata.
+an object of class SNPdata with 5 elements
+\describe{
+  \item{meta}{data frame that contains the sample metadata}
+  \item{details}{a data frame with SNPs genomic coordinates, fraction of missing data per SNP}
+  \item{GT}{an integer matrix with the genotype data. 0='reference allele', 1='alternate allele', 2='mixed allele', NA='missing allele'}
+  \item{vcf}{the vcf file from which the data is generated}
+  \item{index}{an integer}
+  }
 }
 \description{
 This function generate the input data needed for whole genome SNP data genotyped from malaria parasite
 }
 \details{
-use the print.SNPdata() function to print the created object
+use the print(snpdata) function to print the created object
 }

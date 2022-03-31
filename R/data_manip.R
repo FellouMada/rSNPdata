@@ -12,8 +12,16 @@ require("parallel")
 #' @param vcf.file the input VCF file
 #' @param meta.file the metadata file
 #' @param output.dir the path to the folder where to store the output files
-#' @return an object of class SNPdata. 
-#' @details use the print.SNPdata() function to print the created object
+#' @return an object of class SNPdata with 5 elements
+#' \describe{
+#'   \item{meta}{data frame that contains the sample metadata}
+#'   \item{details}{a data frame with SNPs genomic coordinates, fraction of missing data per SNP}
+#'   \item{GT}{an integer matrix with the genotype data. 0='reference allele', 1='alternate allele', 2='mixed allele', NA='missing allele'}
+#'   \item{vcf}{the vcf file from which the data is generated}
+#'   \item{index}{an integer}
+#'   }
+#' @details use the print(snpdata) function to print the created object
+#' @usage snpdata=get_snpdata(vcf.file = "file.vcf.gz", meta.file = "file.txt", output.dir = "/path/to/output/dir")
 #' @export
 
 get_snpdata = function(vcf.file=NA, meta.file=NA, output.dir=NA){
@@ -90,37 +98,47 @@ print.SNPdata=function(snpdata){
 #' @param max.missing.samples the maximum fraction of missing samples above which a loci should be discarded. default=0.2  
 #' @param maf.cutoff the MAF cut-off. loci with a MAF < maf.cutoff will be discarded
 #' @return a SNPdata object
-#' @details 
+#' @usage snpdata = filter_snps_samples(snpdata, min.qual=10, max.missing.sites=0.2, max.missing.samples=0.2, maf.cutoff=0.01)
 #' @export
 filter_snps_samples=function (snpdata, min.qual=10, max.missing.sites=0.2, max.missing.samples=0.2, maf.cutoff=0.01){
     x=snpdata$details
+    fields = c("GT","Phased","Phased_Imputed")
     if (missing(min.qual) & missing(max.missing.sites) & missing(max.missing.samples)) 
         return(snpdata)
     else {
         idx = which(x$Qual >= min.qual & x$percentage.missing.samples <= max.missing.samples & x$MAF >= maf.cutoff)
-        if(length(idx)>0 & length(idx)<nrow(x)){
+        if(length(idx)>0 & length(idx)<nrow(snpdata$details)){
             x = x[idx,]
-            f2c = x %>% subset(Chrom, Pos)
+            snpdata$details = x
+            for(field in fields){
+                if(field %in% names(snpdata)){
+                    snpdata[[field]] = snpdata[[field]][idx,]
+                }
+            }
+            f2c = x %>% select(Chrom, Pos)
+            output.dir=dirname(snpdata$vcf)
             fwrite(f2c, paste0(output.dir,"/loci_to_be_retained.txt"), col.names = FALSE, row.names = FALSE, quote = FALSE, sep = "\t", nThread = 4)
             snpdata$vcf = remove_snps_from_vcf(snpdata$vcf, "loci_to_be_retained.txt", output.dir, index = snpdata$index)
         }else if(length(idx)==0){
             stop("No locus in VCF file has satisfied specified the QC metrics")
-        }else if(length(idx)==nrow(x)){
-            warning("all loci have satisfied the specified QC metrics")
+        }else if(length(idx)==nrow(snpdata$details)){
+            message("all loci have satisfied the specified QC metrics")
         }
         
         idx = which(snpdata$meta$percentage.missing.sites<=max.missing.sites)
         if(length(idx)>0 & length(idx)<nrow(snpdata$meta)){
-            x = x[,idx]
-            fwrite(snpdata$meta$sample[idx], paste0(output.dir,"/samples_to_be_dropped.txt"), col.names = FALSE, row.names = FALSE, quote = FALSE, sep = "\t", nThread = 4)
+            cat("the following samples will be removed: \n",paste(snpdata$meta$sample,collapse = "\n"))
+            snpdata$meta = snpdata$meta[idx,]
+            # x = x[,idx]
+            fwrite(snpdata$meta$sample, paste0(output.dir,"/samples_to_be_dropped.txt"), col.names = FALSE, row.names = FALSE, quote = FALSE, sep = "\t", nThread = 4)
             snpdata$vcf = remove_samples_from_vcf(snpdata$vcf, "samples_to_be_dropped.txt", output.dir, index = snpdata$index)
         }else if(length(idx)==0){
             stop("No sample in VCF file has satisfied the specified QC metrics")
-        }else if(length(idx)==nrow(x)){
-            warning("all samples have satisfied the specified QC metrics")
+        }else if(length(idx)==nrow(snpdata$meta)){
+            message("all samples have satisfied the specified QC metrics")
         }
     }
-    snpdata$details = x
+    
     snpdata$index=snpdata$index+1
     snpdata
 }
@@ -131,14 +149,19 @@ filter_snps_samples=function (snpdata, min.qual=10, max.missing.sites=0.2, max.m
 #' @param snpdata a SNPdata object
 #' @param include.het whether to account for the heterozygous allele or not. this is only used when mat.name="GT"
 #' @param mat.name the name of the matrix to use. default is "GT"
-#' @return a SNPdata object with an updated details table 
+#' @return a SNPdata object with 2 additional columns in the details data frame 
+#' \describe{
+#'   \item{MAF}{minor allele frequency of each snps}
+#'   \item{MAF_allele}{1 if the alternate allele is the minor allele. 0 otherwise}
+#' }
 #' @details if include.het=FALSE, the mixed allele will not be considered in the MAF calculation
+#' @usage snpdata = compute_MAF(snpdata, include.het=FALSE, mat.name="GT")
 #' @export
 compute_MAF = function(snpdata, include.het=TRUE, mat.name="GT"){
     x = snpdata[[mat.name]]
-    ref = rowSums(x==0)
-    alt = rowSums(x==1)
-    het = rowSums(x==2)
+    ref = rowSums(x==0, na.rm = TRUE)
+    alt = rowSums(x==1, na.rm = TRUE)
+    het = rowSums(x==2, na.rm = TRUE)
     if(!include.het){
         res = apply(cbind(ref,alt), 1, getMaf)
     }else{
@@ -198,15 +221,18 @@ getMaf = function(mat){
 #' 
 #' Fws is the within host genetic diversity
 #' @param snpdata a SNPdata object
-#' @return a SNPdata object with an updated meta table 
-#' @details 
+#' @return a SNPdata object with an additional column in the meta table 
+#' \describe{
+#'   \item{Fws}{within host genetic diversity value}
+#' }
+#' @usage snpdata =  calculate_Fws(snpdata)
 #' @export
 calculate_Fws = function(snpdata){
     vcf = snpdata$vcf
-    gdsFile = paste0(dirname(vcf),'/','data.gds')
+    gdsFile = paste0(dirname(vcf),'/','data.gds')  #
     seqVCF2GDS(vcf, gdsFile)  
     my_vcf = seqOpen(gdsFile)     
-    seqSummary(my_vcf)
+    # seqSummary(my_vcf)
     sample.id = seqGetData(my_vcf, "sample.id")     
     coords = getCoordinates(my_vcf)      
     seqSetFilter(my_vcf, variant.id = coords$variant.id[coords$chromosome != "Pf3D7_API_v3"])     
@@ -214,9 +240,8 @@ calculate_Fws = function(snpdata){
     fws_overall = getFws(my_vcf)      #estimate the MOI
     fws_overall = data.table(cbind(as.character(sample.id), as.numeric(fws_overall)))
     names(fws_overall) = c("sample","Fws")
-    setkey(fws_overall,"sample")
-    snpdata$meta = data.table(snpdata$meta, key="sample")
-    snpdata$meta = snpdata$meta[fws_overall, nomatch=NA]
+    meta=data.frame(snpdata$meta) %>% left_join(fws_overall,by="sample")
+    snpdata$meta = meta
     snpdata
 }
 
@@ -224,25 +249,29 @@ calculate_Fws = function(snpdata){
 #' 
 #' mixed genotype phasing based on the number of reads supporting each allele of the heterozygous site. Simulation is performed 100 times 
 #' @param snpdata a SNPdata object
-#' @return a SNPdata object with an additional table named as "Phased" 
+#' @return a SNPdata object with an additional table named as "Phased". this will contain the phased genotypes 
 #' @details when both alleles are not supported by any read or the total number of reads supporting both alleles at a given site is < 5, the genotype will be phased based on a bernouli distribition using the MAF as a parameter. Similarly, when the total number of reads is > 5 and the number of reads supporting one of the allele is not 2 times the number of the other allele, the genotype is phased using a bernouli distribution
+#' @usage snpdata = phase_mixed_genotypes(snpdata)
 #' @export
 phase_mixed_genotypes = function(snpdata){
     vcf = snpdata$vcf
     expression = '%CHROM\t%POS[\t%AD]\n'
     tmp = paste0(dirname(vcf),"/tmp")
+    system(sprintf("mkdir -p %s",tmp))
     ad = paste0(tmp,'/AllelicDepth.txt')
     system(sprintf("bcftools query -f'%s' %s > %s", expression, vcf, ad))
     depth = fread(ad, nThread = 4)
+    depth = as.matrix(subset(depth, select = -c(1:2)))
     path = paste0(dirname(vcf),"/phasing")
     system(sprintf("mkdir -p %s", path))
     correlations = numeric(length = 100)
     for(i in 1:100){
+        cat("running simulation ",i,"\n")
         tmp.snpdata = snpdata
-        mat = apply(tmp.snpdata$GT, 1, phaseData, depth=depth, mc.cores=4)
-        tmp.snpdata[["Phased"]]=mat
-        saveRDS(mat, paste0(path,"/sim",i,".RDS"))
-        res.snpdata = compute_MAF(tmp.snpdata, include.het=TRUE, mat.name="Phased")
+        mat = apply(tmp.snpdata$GT, 1, phaseData, depth=depth)
+        tmp.snpdata[["Phased"]]=t(mat)
+        saveRDS(t(mat), paste0(path,"/sim",i,".RDS"))
+        res.snpdata = compute_MAF(tmp.snpdata, include.het=FALSE, mat.name="Phased")
         correlations[i] = cor(res.snpdata$details[["MAF_Phased"]], res.snpdata$details[["MAF"]])
     }
     idx = which(correlations==max(correlations,na.rm = TRUE))
@@ -251,15 +280,15 @@ phase_mixed_genotypes = function(snpdata){
     snpdata
 }
 
-phaseData = function(depth, genotype){
+phaseData = function(genotype, depth){
     idx = which(genotype==2)
     
     for(j in idx){
         ref = as.numeric(unlist(strsplit(depth[j],','))[1])
         alt = as.numeric(unlist(strsplit(depth[j],','))[2]) 
         if(ref==0 & alt==0){
-            ref.count=sum(genotype==0)
-            alt.count=sum(genotype==1)
+            ref.count=sum(genotype==0, na.rm = TRUE)
+            alt.count=sum(genotype==1, na.rm = TRUE)
             if(ref.count<alt.count) genotype[j] = 0
             else if(ref.count>alt.count) genotype[j] = 1
             else genotype[j] = rbern(1, ref.count/(ref.count+alt.count))
@@ -268,15 +297,15 @@ phaseData = function(depth, genotype){
                 if(ref<alt) genotype[j] = 0
                 else if(ref>alt) genotype[j] = 1
                 else{
-                    ref.count=sum(genotype==0)
-                    alt.count=sum(genotype==1)
+                    ref.count=sum(genotype==0, na.rm = TRUE)
+                    alt.count=sum(genotype==1, na.rm = TRUE)
                     if(ref.count<alt.count) genotype[j] = 0
                     else if(ref.count>alt.count) genotype[j] = 1
                     else genotype[j] = rbern(1, ref.count/(ref.count+alt.count))
                 }
             }else{
-                ref.count=sum(genotype==0)
-                alt.count=sum(genotype==1)
+                ref.count=sum(genotype==0, na.rm = TRUE)
+                alt.count=sum(genotype==1, na.rm = TRUE)
                 if(ref.count<alt.count) genotype[j] = 0
                 else if(ref.count>alt.count) genotype[j] = 1
                 else genotype[j] = rbern(1, ref.count/(ref.count+alt.count))
@@ -288,6 +317,7 @@ phaseData = function(depth, genotype){
             else if(alt==0 & ref<5) genotype[j] = rbern(1, ref.count/(ref.count+alt.count))
         }
     }
+    genotype
 }
 
 
@@ -295,28 +325,29 @@ phaseData = function(depth, genotype){
 #' 
 #' missing genotype imputation based on the MAF at any given locus 
 #' @param snpdata a SNPdata object
-#' @return a SNPdata object with an additional table named as "Phased" 
+#' @param genotype the genotype table from which the missing data will be imputed
+#' @return a SNPdata object with an additional table named as "Phased_Imputed" 
 #' @details when both alleles are not supported by any read or the total number of reads supporting both alleles at a given site is < 5, the genotype will be phased based on a bernouli distribition using the MAF as a parameter. Similarly, when the total number of reads is > 5 and the number of reads supporting one of the allele is not 2 times the number of the other allele, the genotype is phased using a bernouli distribution
+#' @usage snpdata = impute_missing_genotypes(snpdata)
 #' @export
-impute_missing_genotypes = function(snpdata){
-    if(!("Phased"%in%names(snpdata))){
-        message("Phasing the mixte genotypes...")
-        snpdata = phase_mixed_genotypes(snpdata)
-    }
-    genotype = snpdata[["Phased"]]
-    path = paste0(dirname(vcf),"/imputing")
+impute_missing_genotypes = function(snpdata, genotype="GT"){
+    cat("the mixed genotypes will be phased from ",genotype," table\n")
+    field=genotype
+    # genotype = snpdata[[genotype]]
+    path = paste0(dirname(snpdata$vcf),"/imputing")
     system(sprintf("mkdir -p %s", path))
     correlations = numeric(length = 100)
     for(i in 1:100){
+        cat("running simulation ",i,"\n")
         tmp.snpdata = snpdata
-        mat = apply(tmp.snpdata[["Phased"]], 1, impute, mc.cores=4)
-        tmp.snpdata[["Phased_Imputed"]]=mat
-        saveRDS(mat, paste0(path,"/sim",i,".RDS"))
-        res.snpdata = compute_MAF(tmp.snpdata, include.het=FALSE, mat.name="Phased_Imputed")
-        correlations[i] = cor(res.snpdata$details[["MAF_Phased_Imputed"]], res.snpdata$details[["MAF"]])
+        mat = apply(tmp.snpdata[[field]], 1, impute)
+        tmp.snpdata[["Imputed"]]=t(mat)
+        saveRDS(t(mat), paste0(path,"/sim",i,".RDS"))
+        res.snpdata = compute_MAF(tmp.snpdata, include.het=FALSE, mat.name="Imputed")
+        correlations[i] = cor(res.snpdata$details[["MAF_Imputed"]], res.snpdata$details[["MAF"]])
     }
     idx = which(correlations==max(correlations,na.rm = TRUE))
-    snpdata[["Phased_Imputed"]] = readRDS(paste0(path,"/sim",idx[1],".RDS"))
+    snpdata[["Imputed"]] = readRDS(paste0(path,"/sim",idx[1],".RDS"))
     system(sprintf("rm -rf %s", path))
     snpdata
 }
@@ -337,17 +368,16 @@ impute = function(genotype){
 #' 
 #' return data for specified chromosomes only 
 #' @param snpdata a SNPdata object
-#' @param chrom a comma-separated list of chromosomes
+#' @param chrom a vector of chromosomes
 #' @return a SNPdata object with only the data from the specified chromosomes
-#' @details 
+#' @usage  chrom_snpdata = select_chrom(snpdata, chrom="Pf3D7_07_v3")
 #' @export
 select_chrom = function(snpdata, chrom="all"){
-    m = which(names(snpdata) %in% c("meta","vcf"))
+    system(sprintf("tabix %s", snpdata$vcf))
+    m = which(names(snpdata) %in% c("meta","vcf","index"))
     fields = names(snpdata)[-m]
     if(chrom=="all"){
         return(snpdata)
-    }else{
-        chrom = as.character(unlist(strsplit(chrom,",")))
     }
     res = list()
     for(chr in chrom){
@@ -358,6 +388,9 @@ select_chrom = function(snpdata, chrom="all"){
         }
     }
     chrom.vcf = paste0(dirname(chrom.snpdata$vcf),"/target_chrom.vcf.gz")
+    if(file.exists(chrom.vcf)){
+        system(sprintf("rm -f %s", chrom.vcf))
+    }
     if(length(chrom)>1){
         tmp.xme = paste0(dirname(chrom.snpdata$vcf),"/target_chrom.txt")
         fwrite(chrom, tmp.xme, col.names = FALSE, row.names = FALSE, quote = FALSE, sep = "\t")
@@ -376,11 +409,12 @@ select_chrom = function(snpdata, chrom="all"){
 #' @param snpdata a SNPdata object
 #' @param snp.to.be.dropped a data frame with 2 columns "Chrom" and "Pos"
 #' @return a SNPdata object where the specified SNPs have been removed
+#' @usage snpdata = drop_snps(snpdata, snp.to.be.dropped)
 #' @export
 drop_snps = function(snpdata, snp.to.be.dropped){
-    if(is.data.frame(snp.to.be.dropped) & names(snp.to.be.dropped)%in%c("Chrom","Pos")){
+    if((is.data.frame(snp.to.be.dropped)) & (names(snp.to.be.dropped)%in%c("Chrom","Pos"))){
         idx = which(snpdata$details$Chrom%in%snp.to.be.dropped$Chrom & snpdata$details$Pos%in%snp.to.be.dropped$Pos)
-        m = which(names(snpdata) %in% c("meta","vcf"))
+        m = which(names(snpdata) %in% c("meta","vcf","index"))
         fields = names(snpdata)[-m]
         for(field in fields){
             snpdata[[field]] = snpdata[[field]][-idx]
@@ -388,10 +422,11 @@ drop_snps = function(snpdata, snp.to.be.dropped){
         f2c = snpdata$details %>% select(Chrom,Pos)
         tmp.file = paste0(dirname(snpdata$vcf),"/tmp.txt")
         fwrite(f2c, tmp.file, col.names = FALSE, row.names = FALSE, quote = FALSE, sep = "\t", nThread = 4)
-        snpdata$vcf = remove_snps_from_vcf(snpdata$vcf, "tmp.txt", path=dirname(snpdata$vcf))
+        snpdata$vcf = remove_snps_from_vcf(snpdata$vcf, "tmp.txt", path=dirname(snpdata$vcf), index=snpdata$index)
     }else{
         stop("value for 'snp.to.be.dropped' argument should a data frame whith Chrom and Pos columns.")
     }
+    snpdata$index = snpdata$index+1
     snpdata
 }
 
@@ -417,23 +452,30 @@ remove_snps_from_vcf = function(vcf, loci_to_be_retained, path, index=1){
 #' @param snpdata a SNPdata object
 #' @param samples.to.be.dropped a vector of samples to be dropped
 #' @return a SNPdata object where the specified samples have been removed
+#' @usage snpdata = drop_samples(snpdata, samples.to.be.dropped)
 #' @export
 drop_samples = function(snpdata, samples.to.be.dropped){
-    if(length(samples.to.be.dropped)==0 | samples.to.be.dropped %in%snpdata$meta$sample){
+    if(length(samples.to.be.dropped)==0 | (any(!(samples.to.be.dropped %in%snpdata$meta$sample)))){
         stop("no provided samples or provided samples not found!")
     }
     idx = match(samples.to.be.dropped, snpdata$meta$sample)
-    snpdata$meta$sample = snpdata$meta$sample[-idx]
-    m = which(names(snpdata) %in% c("details","vcf","meta"))
+    tmp_meta= snpdata$meta
+    tmp_meta = tmp_meta[-(idx),]
+    snpdata$meta = tmp_meta
+    m = which(names(snpdata) %in% c("details","vcf","meta","index"))
     fields = names(snpdata)[-m]
     for(field in fields){
         idx = match(samples.to.be.dropped, colnames(snpdata[[field]]))
-        snpdata[[field]] = snpdata[[field]][,-idx]
+        # print(idx)
+        tmp_meta=snpdata[[field]]
+        tmp_meta = tmp_meta[,-(idx)]
+        snpdata[[field]] = tmp_meta
     }
     tmp.file = paste0(dirname(snpdata$vcf),"/tmp.txt")
-    fwrite(samples.to.be.dropped, tmp.file, col.names = FALSE, row.names = FALSE, quote = FALSE, sep = "\t", nThread = 4)
-    snpdata$vcf = remove_samples_from_vcf(snpdata$vcf, "tmp.txt", path=dirname(snpdata$vcf))
-    
+    write.table(snpdata$meta$sample, tmp.file, col.names = FALSE, row.names = FALSE, quote = FALSE, sep = "\t")
+    snpdata$vcf = remove_samples_from_vcf(snpdata$vcf, "tmp.txt", path=dirname(snpdata$vcf), index=snpdata$index)
+    snpdata$index = snpdata$index+1
+    snpdata
 }
 
 remove_samples_from_vcf = function(vcf, samples.to.be.retained, path, index=1){

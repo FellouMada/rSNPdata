@@ -4,13 +4,16 @@
 \alias{calculate_Fws}
 \title{Calculate the complexity of infection in every sample (Fws)}
 \usage{
-calculate_Fws(snpdata)
+snpdata =  calculate_Fws(snpdata)
 }
 \arguments{
 \item{snpdata}{a SNPdata object}
 }
 \value{
-a SNPdata object with an updated meta table
+a SNPdata object with an additional column in the meta table 
+\describe{
+  \item{Fws}{within host genetic diversity value}
+}
 }
 \description{
 Fws is the within host genetic diversity

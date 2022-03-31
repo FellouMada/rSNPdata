@@ -4,13 +4,7 @@
 \alias{filter_snps_samples}
 \title{Filter loci and samples (requires bcftools and tabix to be installed)}
 \usage{
-filter_snps_samples(
-  snpdata,
-  min.qual = 10,
-  max.missing.sites = 0.2,
-  max.missing.samples = 0.2,
-  maf.cutoff = 0.01
-)
+snpdata = filter_snps_samples(snpdata, min.qual=10, max.missing.sites=0.2, max.missing.samples=0.2, maf.cutoff=0.01)
 }
 \arguments{
 \item{snpdata}{a SNPdata object}

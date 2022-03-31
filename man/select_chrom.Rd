@@ -4,12 +4,12 @@
 \alias{select_chrom}
 \title{Select data from specified chromosomes}
 \usage{
-select_chrom(snpdata, chrom = "all")
+chrom_snpdata = select_chrom(snpdata, chrom="Pf3D7_07_v3")
 }
 \arguments{
 \item{snpdata}{a SNPdata object}
 
-\item{chrom}{a comma-separated list of chromosomes}
+\item{chrom}{a vector of chromosomes}
 }
 \value{
 a SNPdata object with only the data from the specified chromosomes

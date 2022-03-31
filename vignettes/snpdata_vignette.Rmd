@@ -1,0 +1,100 @@
+---
+title: "snpdata_vignette"
+author: "Karim MANÉ"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{snpdata_vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+---
+date: `r format(Sys.Date(), "%d/%m/%Y")`
+---
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE,comment = "#>")
+require("rSNPdata")
+require("data.table")
+require("dplyr")
+require("SeqArray")
+require("moimix")
+require("statip")
+require("parallel")
+vcf="/Users/km28/Documents/Karim/Packages/Input_Data.vcf.gz"
+metadata="/Users/km28/Documents/Karim/Packages/SampleMetadata.txt"
+outDir="/Users/km28/Documents/Karim/Packages/Test"
+```
+
+## get SNPdata object     
+functions in this package require a `SNPdata` object. This can be generated using the `get_snpdata` function with the following arguments:    
+1. the input VCF file     
+2. the file with the samples metadata     
+3. the path to the folder where the output files will be stored     
+type `?get_snpdata` for more details      
+```{r eval=FALSE}
+snpdata=get_snpdata(vcf.file = vcf, meta.file = metadata, output.dir = outDir)
+```
+
+## print the SNPdata object     
+```{r, eval=FALSE}
+print(snpdata)
+```
+
+## calculate the SNPs minor allele frequency     
+the `compute_MAF` requires a SNPdata object, the name of the genotype table from which the MAF should be calculated (either "GT" for the raw genotypes, "Phased" for phased genotypes, "Phased_Imputed" for phased and imputed genotypes).    
+include.het determines whether to account for heterozygous sites in MAF calculation.   
+type `?compute_MAF` for more details     
+```{r, eval=FALSE}
+snpdata = compute_MAF(snpdata, include.het=FALSE, mat.name="GT")
+```
+
+## calculate the within-host genetics diversity index (Fws)   
+the `calculate_Fws` function requires a SNPdata object   
+type `?compute_MAF` for more details     
+```{r, eval=FALSE}
+snpdata =  calculate_Fws(snpdata)
+```
+
+## filter the SNPdata object     
+use the `filter_snps_samples` function to remove the SNPs and samples that do not satisfy the user criteria.    
+```{r eval=FALSE}
+snpdata = filter_snps_samples(snpdata, min.qual=10, max.missing.sites=0.2, max.missing.samples=0.2, maf.cutoff=0.01)
+```
+
+## mixed genotypes phasing     
+use the `phase_mixed_genotypes` function to phase the mixed genotypes    
+```{ r eval=FALSE}
+snpdata = phase_mixed_genotypes(snpdata)
+```
+
+## impute the missing data   
+use the `impute_missing_genotypes` function to impute the missing genotypes. the `genotype` argument determines which genotype table should be used to impute the missing data ("GT" to impute from raw data, "Phased" to impute from the phased data).    
+```{r eval=FALSE}
+snpdata = impute_missing_genotypes(snpdata, genotype="GT")
+```
+
+## select data for a given chromosome     
+to get the data from chromosome 7 ("Pf3D7_07_v3"), use the `select_chrom`    
+```{r eval=FALSE}
+chrom7_snpdata = select_chrom(snpdata, chrom="Pf3D7_07_v3")
+```
+
+## drop a set of SNPs from the data       
+if you want to remove some loci from the data, use the `drop_snps` function and provide it with a data frame with 2 columns, "Chrom" and "Pos", representing the genomic coordinates of the loci to be dropped.     
+```{r eval=FALSE}
+snp.to.be.dropped = chrom7_snpdata$details %>% select(Chrom,Pos)
+idx = sample(1:nrow(snp.to.be.dropped),100, replace = FALSE)
+snp.to.be.dropped = snp.to.be.dropped[idx,]
+reduced_snpdata = drop_snps(chrom7_snpdata, snp.to.be.dropped)
+```
+
+## drop a set of samples from the data       
+if you want to remove some samples from the data, use the `drop_samples` function and provide it with a vector of samples to be dropped.     
+```{r eval=FALSE}
+idx = sample(1:nrow(reduced_snpdata$meta),10, replace = FALSE)
+samples.to.be.dropped = reduced_snpdata$meta$sample[idx]
+reduced_snpdata = drop_samples(reduced_snpdata, samples.to.be.dropped)
+```
+
+
+
+

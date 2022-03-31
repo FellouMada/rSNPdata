@@ -4,13 +4,13 @@
 \alias{phase_mixed_genotypes}
 \title{Phase mixed genotypes}
 \usage{
-phase_mixed_genotypes(snpdata)
+snpdata = phase_mixed_genotypes(snpdata)
 }
 \arguments{
 \item{snpdata}{a SNPdata object}
 }
 \value{
-a SNPdata object with an additional table named as "Phased"
+a SNPdata object with an additional table named as "Phased". this will contain the phased genotypes
 }
 \description{
 mixed genotype phasing based on the number of reads supporting each allele of the heterozygous site. Simulation is performed 100 times

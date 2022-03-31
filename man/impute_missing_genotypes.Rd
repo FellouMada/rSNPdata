@@ -4,13 +4,15 @@
 \alias{impute_missing_genotypes}
 \title{Impute missing genotypes}
 \usage{
-impute_missing_genotypes(snpdata)
+snpdata = impute_missing_genotypes(snpdata)
 }
 \arguments{
 \item{snpdata}{a SNPdata object}
+
+\item{genotype}{the genotype table from which the missing data will be imputed}
 }
 \value{
-a SNPdata object with an additional table named as "Phased"
+a SNPdata object with an additional table named as "Phased_Imputed"
 }
 \description{
 missing genotype imputation based on the MAF at any given locus

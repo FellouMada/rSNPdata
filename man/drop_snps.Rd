@@ -4,7 +4,7 @@
 \alias{drop_snps}
 \title{Drop set a SNPs}
 \usage{
-drop_snps(snpdata, snp.to.be.dropped)
+snpdata = drop_snps(snpdata, snp.to.be.dropped)
 }
 \arguments{
 \item{snpdata}{a SNPdata object}

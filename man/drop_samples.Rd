@@ -4,7 +4,7 @@
 \alias{drop_samples}
 \title{Drop samples}
 \usage{
-drop_samples(snpdata, samples.to.be.dropped)
+snpdata = drop_samples(snpdata, samples.to.be.dropped)
 }
 \arguments{
 \item{snpdata}{a SNPdata object}
