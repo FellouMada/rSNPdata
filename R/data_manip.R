@@ -6,12 +6,6 @@ require("moimix")
 require("statip")
 require("parallel")
 
-
-TEST="data-raw"
-RAW=paste0(TEST,"/test.vcf.gz")
-METADATA=paste0(TEST,"/metadat.txt")
-PROCESSED="./DATA"
-
 #' Generate the SNPdata object
 #' 
 #' This function generate the input data needed for whole genome SNP data genotyped from malaria parasite 
