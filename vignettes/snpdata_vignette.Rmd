@@ -1,5 +1,5 @@
 ---
-title: "snpdata_vignette"
+title: "rSNPdata"
 author: "Karim MANÉ"
 output: rmarkdown::html_vignette
 vignette: >

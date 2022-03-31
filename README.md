@@ -12,8 +12,12 @@ before installing this package, make sure the following tools and packages are i
 ## intallation   
 ``` {r}
 library(devtools)
-devtools::install_github("FellouMada/rSNPdata")
+devtools::install_github("FellouMada/rSNPdata", build_vignettes = TRUE)
 library(rSNPdata)
 ```
 
+## manual  
+```{r}
+browseVignettes("rSNPdata")
+```
 
