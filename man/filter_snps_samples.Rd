@@ -6,7 +6,7 @@
 \usage{
 filter_snps_samples(
   snpdata,
-  min.qual.score = 2,
+  min.qual = 10,
   max.missing.sites = 0.2,
   max.missing.samples = 0.2,
   maf.cutoff = 0.01
@@ -15,7 +15,7 @@ filter_snps_samples(
 \arguments{
 \item{snpdata}{a SNPdata object}
 
-\item{min.qual.score}{the minimum quality score below which a loci will be discarded. default=2}
+\item{min.qual}{the minimum call quality score below which a loci will be discarded. default=10}
 
 \item{max.missing.sites}{the maximum fraction of missing sites above which a sample should be discarded. default=0.2}
 

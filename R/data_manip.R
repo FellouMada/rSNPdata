@@ -52,8 +52,8 @@ get_snpdata = function(vcf.file=NA, meta.file=NA, output.dir=NA){
     snps = as.matrix(subset(genotypeF, select=-c(1:5)))
     snps[snps=="0/0"]="0"
     snps[snps=="1/1"]="1"
-    snps[snps=="0/1" || snps=="1/0"]="2"
-    snps[snps=="./." || snps==".|."]=NA
+    snps[snps=="0/1" | snps=="1/0"]="2"
+    snps[snps=="./." | snps==".|."]=NA
     snps=apply(snps, 2, function(x) as.integer(x))
     meta = add_metadata(sampleIDs,meta.file)
     meta$percentage.missing.sites = colSums(is.na(snps))/nrow(snps)
@@ -100,11 +100,11 @@ print.SNPdata=function(snpdata){
 #' @export
 filter_snps_samples=function (snpdata, min.qual=10, max.missing.sites=0.2, max.missing.samples=0.2, maf.cutoff=0.01){
     x=snpdata$details
-    if (missing(min.qual) && missing(max.missing.sites) && missing(max.missing.samples)) 
+    if (missing(min.qual) & missing(max.missing.sites) & missing(max.missing.samples)) 
         return(snpdata)
     else {
-        idx = which(x$Qual >= min.qual && x$percentage.missing.samples <= max.missing.samples && x$MAF >= maf.cutoff)
-        if(length(idx)>0 && length(idx)<nrow(x)){
+        idx = which(x$Qual >= min.qual & x$percentage.missing.samples <= max.missing.samples & x$MAF >= maf.cutoff)
+        if(length(idx)>0 & length(idx)<nrow(x)){
             x = x[idx,]
             f2c = x %>% subset(Chrom, Pos)
             fwrite(f2c, paste0(output.dir,"/loci_to_be_retained.txt"), col.names = FALSE, row.names = FALSE, quote = FALSE, sep = "\t", nThread = 4)
@@ -116,7 +116,7 @@ filter_snps_samples=function (snpdata, min.qual=10, max.missing.sites=0.2, max.m
         }
         
         idx = which(snpdata$meta$percentage.missing.sites<=max.missing.sites)
-        if(length(idx)>0 && length(idx)<nrow(snpdata$meta)){
+        if(length(idx)>0 & length(idx)<nrow(snpdata$meta)){
             x = x[,idx]
             fwrite(snpdata$meta$sample[idx], paste0(output.dir,"/samples_to_be_dropped.txt"), col.names = FALSE, row.names = FALSE, quote = FALSE, sep = "\t", nThread = 4)
             snpdata$vcf = remove_samples_from_vcf(snpdata$vcf, "samples_to_be_dropped.txt", output.dir, index = snpdata$index)
@@ -263,14 +263,14 @@ phaseData = function(depth, genotype){
     for(j in idx){
         ref = as.numeric(unlist(strsplit(depth[j],','))[1])
         alt = as.numeric(unlist(strsplit(depth[j],','))[2]) 
-        if(ref==0 && alt==0){
+        if(ref==0 & alt==0){
             ref.count=sum(genotype==0)
             alt.count=sum(genotype==1)
             if(ref.count<alt.count) genotype[j] = 0
             else if(ref.count>alt.count) genotype[j] = 1
             else genotype[j] = rbern(1, ref.count/(ref.count+alt.count))
-        }else if(ref!=0 && alt!=0){
-            if((ref+alt)>=5 && (ref>=(2*alt) || alt>=(2*ref))){
+        }else if(ref!=0 & alt!=0){
+            if((ref+alt)>=5 & (ref>=(2*alt) | alt>=(2*ref))){
                 if(ref<alt) genotype[j] = 0
                 else if(ref>alt) genotype[j] = 1
                 else{
@@ -287,11 +287,11 @@ phaseData = function(depth, genotype){
                 else if(ref.count>alt.count) genotype[j] = 1
                 else genotype[j] = rbern(1, ref.count/(ref.count+alt.count))
             }
-        }else if(ref==0 || alt==0){
-            if(ref==0 && alt>=5) genotype[j] = 1
-            else if(ref==0 && alt<5) genotype[j] = rbern(1, alt.count/(ref.count+alt.count))
-            if(alt==0 && ref>=5) genotype[j] = 0
-            else if(alt==0 && ref<5) genotype[j] = rbern(1, ref.count/(ref.count+alt.count))
+        }else if(ref==0 | alt==0){
+            if(ref==0 & alt>=5) genotype[j] = 1
+            else if(ref==0 & alt<5) genotype[j] = rbern(1, alt.count/(ref.count+alt.count))
+            if(alt==0 & ref>=5) genotype[j] = 0
+            else if(alt==0 & ref<5) genotype[j] = rbern(1, ref.count/(ref.count+alt.count))
         }
     }
 }
@@ -384,8 +384,8 @@ select_chrom = function(snpdata, chrom="all"){
 #' @return a SNPdata object where the specified SNPs have been removed
 #' @export
 drop_snps = function(snpdata, snp.to.be.dropped){
-    if(is.data.frame(snp.to.be.dropped) && names(snp.to.be.dropped)%in%c("Chrom","Pos")){
-        idx = which(snpdata$details$Chrom%in%snp.to.be.dropped$Chrom && snpdata$details$Pos%in%snp.to.be.dropped$Pos)
+    if(is.data.frame(snp.to.be.dropped) & names(snp.to.be.dropped)%in%c("Chrom","Pos")){
+        idx = which(snpdata$details$Chrom%in%snp.to.be.dropped$Chrom & snpdata$details$Pos%in%snp.to.be.dropped$Pos)
         m = which(names(snpdata) %in% c("meta","vcf"))
         fields = names(snpdata)[-m]
         for(field in fields){
@@ -425,7 +425,7 @@ remove_snps_from_vcf = function(vcf, loci_to_be_retained, path, index=1){
 #' @return a SNPdata object where the specified samples have been removed
 #' @export
 drop_samples = function(snpdata, samples.to.be.dropped){
-    if(length(samples.to.be.dropped)==0 || samples.to.be.dropped %in%snpdata$meta$sample){
+    if(length(samples.to.be.dropped)==0 | samples.to.be.dropped %in%snpdata$meta$sample){
         stop("no provided samples or provided samples not found!")
     }
     idx = match(samples.to.be.dropped, snpdata$meta$sample)

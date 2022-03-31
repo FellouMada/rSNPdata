@@ -13,7 +13,7 @@ impute_missing_genotypes(snpdata)
 a SNPdata object with an additional table named as "Phased"
 }
 \description{
-missing genotype imputation based on the MAF
+missing genotype imputation based on the MAF at any given locus
 }
 \details{
 when both alleles are not supported by any read or the total number of reads supporting both alleles at a given site is < 5, the genotype will be phased based on a bernouli distribition using the MAF as a parameter. Similarly, when the total number of reads is > 5 and the number of reads supporting one of the allele is not 2 times the number of the other allele, the genotype is phased using a bernouli distribution
