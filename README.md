@@ -21,19 +21,19 @@ library(rSNPdata)
 Short index:
 
 - [Install](#Install)                                                             
-- [FUNCTIONS](#FUNCTIONS)    
-  * [SNPdata object](#get SNPdata object)
-  * [Metrics](#metrics)
-  * [Phenotype](#phenotype)
-  * [Genotype](#genotype)
-  * [Transformation](#transformation)
-  * [Statistics](#statistics)
-  * [Scripts](#scripts)
-- [Link library](#link-library)
-- [Build from source](#build-from-source)
-- [Development](#Development)
-- [LICENSE](#LICENSE)
-- [Credit work](#Credit)
+- [DATA DESCRIPTION FUNCTIONS](#DATA DESCRIPTION)    
+  * [get_snpdata](#DATA DESCRIPTION)
+  * [print](#DATA DESCRIPTION)
+  * [compute_MAF](#DATA DESCRIPTION)
+  * [calculate_Fws](#DATA DESCRIPTION)
+- [DATA FILTRATION FUNCTIONS](#DATA FILTRATION)
+  * [filter_snps_samples](#DATA FILTRATION)
+  * [select_chrom](#DATA FILTRATION)
+  * [drop_snps](#DATA FILTRATION)
+  * [drop_samples](#DATA FILTRATION)
+- [DATA TRANSFORMATION FUNCTIONS](#DATA TRANSFORMATION)
+  * [phase_mixed_genotypes](#DATA TRANSFORMATION)
+  * [impute_missing_genotypes](#DATA TRANSFORMATION)
 
 ## Install   
 ``` {r eval=FALSE}
@@ -42,16 +42,20 @@ devtools::install_github("FellouMada/rSNPdata", build_vignettes = TRUE)
 library(rSNPdata)
 ```
 
-# FUNCTIONS     
-
-## get SNPdata object    
-| function name | description |    
-| :-------------- | :---------- |     
-| [get_snpdata](./doc/get_snpdata.md) | Create SNPdata onject. the functions in this package require a `SNPdata` object. This can be generated with this function| 
-
-
 ## manual  
 ```{r}
 browseVignettes("rSNPdata")
 ```
+
+# DATA DESCRIPTION    
+
+| function name | description |    
+| :-------------- | :---------- |     
+| [get_snpdata](./doc/get_snpdata.md) | Create SNPdata onject. the functions in this package require a `SNPdata` object. This can be generated with this function | 
+
+#DATA FILTRATION
+
+
+#DATA TRANSFORMATION
+
 
