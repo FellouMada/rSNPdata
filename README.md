@@ -21,19 +21,19 @@ library(rSNPdata)
 Short index:
 
 - [Install](#Install)                                                             
-- [DATA DESCRIPTION FUNCTIONS](#DESCRIPTION)    
-  * [get_snpdata](#DATDESCRIPTION)
-  * [print](#DATA DESCRIPTION)
-  * [compute_MAF](#DATA DESCRIPTION)
-  * [calculate_Fws](#DATA DESCRIPTION)
-- [DATA FILTRATION FUNCTIONS](#DATA FILTRATION)
-  * [filter_snps_samples](#DATA FILTRATION)
-  * [select_chrom](#DATA FILTRATION)
-  * [drop_snps](#DATA FILTRATION)
-  * [drop_samples](#DATA FILTRATION)
-- [DATA TRANSFORMATION FUNCTIONS](#DATA TRANSFORMATION)
-  * [phase_mixed_genotypes](#DATA TRANSFORMATION)
-  * [impute_missing_genotypes](#DATA TRANSFORMATION)
+- [DATA DESCRIPTION](#DESCRIPTION)    
+  * [get_snpdata](#DESCRIPTION)
+  * [print](#DESCRIPTION)
+  * [compute_MAF](#DESCRIPTION)
+  * [calculate_Fws](#DESCRIPTION)
+- [DATA FILTRATION](#FILTRATION)
+  * [filter_snps_samples](#FILTRATION)
+  * [select_chrom](#FILTRATION)
+  * [drop_snps](#FILTRATION)
+  * [drop_samples](#FILTRATION)
+- [DATA TRANSFORMATION](#TRANSFORMATION)
+  * [phase_mixed_genotypes](#TRANSFORMATION)
+  * [impute_missing_genotypes](#TRANSFORMATION)
 
 ## Install   
 ``` {r eval=FALSE}
@@ -47,7 +47,7 @@ library(rSNPdata)
 browseVignettes("rSNPdata")
 ```
 
-# DATA DESCRIPTION    
+# DESCRIPTION    
 
 | function name | description |    
 | :-------------- | :---------- |     
@@ -56,9 +56,9 @@ browseVignettes("rSNPdata")
 | [compute_MAF](./doc/maf.md) | calculate the snp minor allele frequency based on the allelic depth and minor allele frequency | 
 | [calculate_Fws](./doc/fws.md) | calculate the within-host genetic diversity index  | 
 
-# DATA FILTRATION
+# FILTRATION
 
 
-# DATA TRANSFORMATION
+# TRANSFORMATION
 
 
