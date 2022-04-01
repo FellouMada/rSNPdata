@@ -52,10 +52,13 @@ browseVignettes("rSNPdata")
 | function name | description |    
 | :-------------- | :---------- |     
 | [get_snpdata](./doc/get_snpdata.md) | Create SNPdata onject. the functions in this package require a `SNPdata` object. This can be generated with this function | 
+| [print](./doc/print.md) | print the SNPdata object | 
+| [compute_MAF](./doc/maf.md) | calculate the snp minor allele frequency based on the allelic depth and minor allele frequency | 
+| [calculate_Fws](./doc/fws.md) | calculate the within-host genetic diversity index  | 
 
-#DATA FILTRATION
+# DATA FILTRATION
 
 
-#DATA TRANSFORMATION
+# DATA TRANSFORMATION
 
 
