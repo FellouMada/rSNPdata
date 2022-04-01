@@ -4,23 +4,18 @@ R package to manage and analyse Plasmodium falciparum whole genome SNPs data.
 ## requirements      
 before installing this package, make sure the following tools and packages are installed:      
 #### tools     
-[bcftools](http://www.htslib.org/download/) version 1.9 or above   
+[bcftools](http://www.htslib.org/download/)    
 [tabix](http://www.htslib.org/doc/tabix.html)  
 [vcflib](https://github.com/vcflib/vcflib)
 
 #### R packages     
 `data.table`,`dplyr`,`SeqArray`,`moimix`,`statip`,`parallel`
 
-## intallation   
-``` {r}
-library(devtools)
-devtools::install_github("FellouMada/rSNPdata", build_vignettes = TRUE)
-library(rSNPdata)
-```
+---
+Index:
 
-Short index:
-
-- [Install](#Install)                                                             
+- [Install](#Install) 
+- [Manual](#Manual)
 - [DATA DESCRIPTION](#DESCRIPTION)    
   * [get_snpdata](#DESCRIPTION)
   * [print](#DESCRIPTION)
@@ -34,6 +29,7 @@ Short index:
 - [DATA TRANSFORMATION](#TRANSFORMATION)
   * [phase_mixed_genotypes](#TRANSFORMATION)
   * [impute_missing_genotypes](#TRANSFORMATION)
+---
 
 ## Install   
 ``` {r eval=FALSE}
@@ -42,7 +38,7 @@ devtools::install_github("FellouMada/rSNPdata", build_vignettes = TRUE)
 library(rSNPdata)
 ```
 
-## manual  
+## Manual  
 ```{r}
 browseVignettes("rSNPdata")
 ```
