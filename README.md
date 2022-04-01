@@ -21,8 +21,8 @@ library(rSNPdata)
 Short index:
 
 - [Install](#Install)                                                             
-- [DATA DESCRIPTION FUNCTIONS](#DATA DESCRIPTION)    
-  * [get_snpdata](#DATA DESCRIPTION)
+- [DATA DESCRIPTION FUNCTIONS](#DESCRIPTION)    
+  * [get_snpdata](#DATDESCRIPTION)
   * [print](#DATA DESCRIPTION)
   * [compute_MAF](#DATA DESCRIPTION)
   * [calculate_Fws](#DATA DESCRIPTION)
