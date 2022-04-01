@@ -7,9 +7,12 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
+
 ---
 date: `r format(Sys.Date(), "%d/%m/%Y")`
 ---
+
+
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE,comment = "#>")
 require("rSNPdata")
@@ -24,8 +27,17 @@ metadata="/Users/km28/Documents/Karim/Packages/SampleMetadata.txt"
 outDir="/Users/km28/Documents/Karim/Packages/Test"
 ```
 
-## get SNPdata object     
-functions in this package require a `SNPdata` object. This can be generated using the `get_snpdata` function with the following arguments:    
+## Install   
+``` {r eval=FALSE}
+library(devtools)
+devtools::install_github("FellouMada/rSNPdata", build_vignettes = TRUE)
+library(rSNPdata)
+```
+
+# FUNCTIONS     
+
+## get SNPdata object      
+the functions in this package require a `SNPdata` object. This can be generated using the `get_snpdata` function with the following arguments:    
 1. the input VCF file     
 2. the file with the samples metadata     
 3. the path to the folder where the output files will be stored     
