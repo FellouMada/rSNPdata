@@ -248,13 +248,14 @@ calculate_Fws = function(snpdata){
 
 #' Phase mixed genotypes
 #'
-#' mixed genotype phasing based on the number of reads supporting each allele of the heterozygous site. Simulation is performed 100 times
+#' mixed genotype phasing based on the number of reads supporting each allele of the heterozygous site. Imputation will be done nsim times and phased data with highest correlation between MAF from raw data and MAF from phased data will be retained
 #' @param snpdata a SNPdata object
 #' @return a SNPdata object with an additional table named as "Phased". this will contain the phased genotypes
+#' @param nsim an integer. the number of simulations to be performed
 #' @details when both alleles are not supported by any read or the total number of reads supporting both alleles at a given site is < 5, the genotype will be phased based on a bernouli distribition using the MAF as a parameter. Similarly, when the total number of reads is > 5 and the number of reads supporting one of the allele is not 2 times the number of the other allele, the genotype is phased using a bernouli distribution
 #' @usage snpdata = phase_mixed_genotypes(snpdata)
 #' @export
-phase_mixed_genotypes = function(snpdata){
+phase_mixed_genotypes = function(snpdata, nsim=100){
     vcf = snpdata$vcf
     expression = '%CHROM\t%POS[\t%AD]\n'
     tmp = paste0(dirname(vcf),"/tmp")
@@ -266,7 +267,7 @@ phase_mixed_genotypes = function(snpdata){
     path = paste0(dirname(vcf),"/phasing")
     system(sprintf("mkdir -p %s", path))
     correlations = numeric(length = 100)
-    for(i in 1:100){
+    for(i in 1:nsim){
         cat("running simulation ",i,"\n")
         tmp.snpdata = snpdata
         mat = apply(tmp.snpdata$GT, 1, phaseData, depth=depth)
@@ -324,21 +325,22 @@ phaseData = function(genotype, depth){
 
 #' Impute missing genotypes
 #'
-#' missing genotype imputation based on the MAF at any given locus
+#' missing genotype imputation based on the MAF at any given locus. Imputation will be done nsim times and imputed data with highest correlation between MAF from raw data and MAF from imputed data will be retained
 #' @param snpdata a SNPdata object
 #' @param genotype the genotype table from which the missing data will be imputed
+#' @param nsim an integer. the number of simulations
 #' @return a SNPdata object with an additional table named as "Phased_Imputed"
 #' @details when both alleles are not supported by any read or the total number of reads supporting both alleles at a given site is < 5, the genotype will be phased based on a bernouli distribition using the MAF as a parameter. Similarly, when the total number of reads is > 5 and the number of reads supporting one of the allele is not 2 times the number of the other allele, the genotype is phased using a bernouli distribution
 #' @usage snpdata = impute_missing_genotypes(snpdata)
 #' @export
-impute_missing_genotypes = function(snpdata, genotype="GT"){
+impute_missing_genotypes = function(snpdata, genotype="Phased", nsim=100){
     cat("the mixed genotypes will be phased from ",genotype," table\n")
     field=genotype
     # genotype = snpdata[[genotype]]
     path = paste0(dirname(snpdata$vcf),"/imputing")
     system(sprintf("mkdir -p %s", path))
     correlations = numeric(length = 100)
-    for(i in 1:100){
+    for(i in 1:nsim){
         cat("running simulation ",i,"\n")
         tmp.snpdata = snpdata
         mat = apply(tmp.snpdata[[field]], 1, impute)

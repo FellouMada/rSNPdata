@@ -66,7 +66,7 @@ browseVignettes("rSNPdata")
 
 | function name | description |    
 | :-------------- | :---------- |     
-| [phase_mixed_genotypes](./doc/phase.md) | Phase mixed genotypes based on number of read supporting each allele and Bernoulli distribution | 
-| [impute_missing_genotypes](./doc/impute.md) | impute missing genotypes based on minor allele frequency and Bernoulli distribution | 
+| [phase_mixed_genotypes](./doc/phase.md) | Phase mixed genotypes based on number of read supporting each allele and Bernoulli distribution. This process will be repeated `nsim` times and data from iteration with highest correlation between MAF phased data and MAF raw data will be retained | 
+| [impute_missing_genotypes](./doc/impute.md) | impute missing genotypes based on minor allele frequency and Bernoulli distribution. This process will be repeated `nsim` times and data from iteration with highest correlation between MAF imputed data and MAF raw data will be retained| 
 
 
