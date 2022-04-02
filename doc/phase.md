@@ -4,7 +4,7 @@
 
 # USAGE
 
-**phase_mixed_genotypes**(snpdata)
+**phase_mixed_genotypes**(snpdata, nsim=100)
 
 # DESCRIPTION
 
@@ -13,6 +13,7 @@
 # OPTIONS
 ```
 snpdata: an object of class SNPdata
+nsim: the number of simulations
 ```
 
 # RETURN
