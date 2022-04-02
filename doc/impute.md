@@ -4,7 +4,7 @@
 
 # USAGE
 
-**impute_missing_genotypes**(snpdata, genotype="Phased")
+**impute_missing_genotypes**(snpdata, genotype="Phased", nsim=100)
 
 # DESCRIPTION
 
@@ -14,6 +14,7 @@
 ```
 snpdata: an object of class SNPdata
 genotype: the name of the genotype matrix to be used
+nsim: the number of simulations
 ```
 
 # RETURN
