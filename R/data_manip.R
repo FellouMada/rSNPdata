@@ -81,6 +81,7 @@ add_metadata = function(sampleIDs, metadata){
 #' Print SNPdata
 #' @param snpdata SNPdata object
 #' @return NULL
+#' @usage  print(snpdata)
 #' @export
 print.SNPdata=function(snpdata){
     print(head(snpdata$meta))
@@ -157,7 +158,7 @@ filter_snps_samples=function (snpdata, min.qual=10, max.missing.sites=0.2, max.m
 #' @details if include.het=FALSE, the mixed allele will not be considered in the MAF calculation
 #' @usage snpdata = compute_MAF(snpdata, include.het=FALSE, mat.name="GT")
 #' @export
-compute_MAF = function(snpdata, include.het=TRUE, mat.name="GT"){
+compute_MAF = function(snpdata, include.het=FALSE, mat.name="GT"){
     x = snpdata[[mat.name]]
     ref = rowSums(x==0, na.rm = TRUE)
     alt = rowSums(x==1, na.rm = TRUE)
