@@ -66,7 +66,7 @@ browseVignettes("rSNPdata")
 
 | function name | description |    
 | :-------------- | :---------- |     
-| [phase_mixed_genotypes](./doc/get_snpdata.md) | Create SNPdata onject. the functions in this package require a `SNPdata` object. This can be generated with this function | 
-| [impute_missing_genotypes](./doc/print.md) | print the SNPdata object | 
+| [phase_mixed_genotypes](./doc/phase.md) | Phase mixed genotypes based on number of read supporting each allele and Bernoulli distribution | 
+| [impute_missing_genotypes](./doc/impute.md) | impute missing genotypes based on minor allele frequency and Bernoulli distribution | 
 
 
