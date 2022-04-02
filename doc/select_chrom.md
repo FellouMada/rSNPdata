@@ -10,7 +10,7 @@
 
 **select_chrom** is a function that is used to select the data for a specific set of chromosomes. 
 
-#OPTIONS
+# OPTIONS
 ```
 snpdata: an object of class SNPdata
 chrom: a chromosome or vector of chromosome names 
