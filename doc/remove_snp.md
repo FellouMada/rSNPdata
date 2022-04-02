@@ -10,7 +10,7 @@
 
 **drop_snps** is a function that removes a set of snps from the SNPdata object. the genomic coordinates of the loci to be removed could be given as a data frame with 2 columns: "Chrom" and "Pos" (in this case, the rest of the argument can be ignored or set to NA) or as a genomic region: chrom="Pf3D7_10_v3", start=100, end=500 (in this case, the snp.to.be.dropped argument can be ignored or set to NA)  
 
-#OPTIONS
+# OPTIONS
 ```
 snpdata: an object of class SNPdata
 snp.to.be.dropped: a data frame with 2 columns: Chrom and Pos

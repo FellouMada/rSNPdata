@@ -10,7 +10,7 @@
 
 **calculate_Fws** is a function that calculates the within-host genetic diversity (Fws). Note that the Fws is obtained using the [moimix](https://github.com/bahlolab/moimix) R package
 
-#OPTIONS
+# OPTIONS
 ```
 snpdata: an object of class SNPdata
 ```

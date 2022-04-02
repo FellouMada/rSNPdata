@@ -10,7 +10,7 @@
 
 **print** is used to print the SNPdata object
 
-#OPTIONS
+# OPTIONS
 ```
 snpdata: an object of class SNPdata
 ```
