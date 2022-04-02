@@ -10,7 +10,7 @@
 
 **drop_samples** is a function that is used to removed a set of samples from the SNPdata object
 
-#OPTIONS
+# OPTIONS
 ```
 snpdata: an object of class SNPdata
 samples.to.be.dropped: a vector of samples to be removed
