@@ -10,7 +10,7 @@
 
 **get_snpdata** is a function that create the SNPdata object required for this package.
 
-#OPTIONS
+# OPTIONS
 ```
 vcf.file: the input vcf file
 meta.file: the metadata file
