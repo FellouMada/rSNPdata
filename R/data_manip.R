@@ -410,23 +410,50 @@ select_chrom = function(snpdata, chrom="all"){
 #' remove a set of SNPs from the SNPdata object
 #' @param snpdata a SNPdata object
 #' @param snp.to.be.dropped a data frame with 2 columns "Chrom" and "Pos"
+#' @param chrom the chromosome from which loci should be dropped
+#' @param start the starting position of the region to be discarded
+#' @param end the end position of the region to be discarded
 #' @return a SNPdata object where the specified SNPs have been removed
-#' @usage snpdata = drop_snps(snpdata, snp.to.be.dropped)
+#' @usage snpdata = drop_snps(snpdata, snp.to.be.dropped=NA, chrom="Pf3D7_05_v3", start=100, end=500)
+#' @details when snp.to.be.dropped is not set to NA (i.e. the genomic coordinates of snps to be removed are in a data frame), then the rest of the arguments can be ignored or set to NA (chrom=NA, start=NA, end=NA)
 #' @export
-drop_snps = function(snpdata, snp.to.be.dropped){
-    if((is.data.frame(snp.to.be.dropped)) & (names(snp.to.be.dropped)%in%c("Chrom","Pos"))){
+drop_snps = function(snpdata, snp.to.be.dropped=NA, chrom=NA, start=NA, end=NA){
+    if(is.na(snp.to.be.dropped) & is.na(chrom) & is.na(start) & is.na(end)){
+        stop("Please provide genomic coordinates of loci to be removed")
+    }
+    if((is.data.frame(snp.to.be.dropped)) & (names(snp.to.be.dropped)%in%c("Chrom","Pos")) & (is.na(chrom) & is.na(start) & is.na(end))){
         idx = which(snpdata$details$Chrom%in%snp.to.be.dropped$Chrom & snpdata$details$Pos%in%snp.to.be.dropped$Pos)
         m = which(names(snpdata) %in% c("meta","vcf","index"))
         fields = names(snpdata)[-m]
         for(field in fields){
-            snpdata[[field]] = snpdata[[field]][-idx]
+            tmp=snpdata[[field]][-idx,]
+            snpdata[[field]] = tmp
         }
         f2c = snpdata$details %>% select(Chrom,Pos)
         tmp.file = paste0(dirname(snpdata$vcf),"/tmp.txt")
         fwrite(f2c, tmp.file, col.names = FALSE, row.names = FALSE, quote = FALSE, sep = "\t", nThread = 4)
         snpdata$vcf = remove_snps_from_vcf(snpdata$vcf, "tmp.txt", path=dirname(snpdata$vcf), index=snpdata$index)
+    }else if(is.na(snp.to.be.dropped) & (!is.na(chrom) & !is.na(start) & !is.na(end))){
+        idx = which(snpdata$details$Chrom==chrom & (snpdata$details$Pos>=start & snpdata$details$Pos<=end))
+        if(length(idx)>0){
+            m = which(names(snpdata) %in% c("meta","vcf","index"))
+            fields = names(snpdata)[-m]
+            for(field in fields){
+                tmp=snpdata[[field]][-idx,]
+                snpdata[[field]] = tmp
+            }
+            f2c = snpdata$details %>% select(Chrom,Pos)
+            tmp.file = paste0(dirname(snpdata$vcf),"/tmp.txt")
+            fwrite(f2c, tmp.file, col.names = FALSE, row.names = FALSE, quote = FALSE, sep = "\t", nThread = 4)
+            snpdata$vcf = remove_snps_from_vcf(snpdata$vcf, "tmp.txt", path=dirname(snpdata$vcf), index=snpdata$index)
+            system(sprintf("rm -f %s", tmp.file))
+            cat("\n",length(idx)," loci have been successfully removed")
+        }
+        else{
+            stop("there is no loci overlapping the specified region")
+        }
     }else{
-        stop("value for 'snp.to.be.dropped' argument should a data frame whith Chrom and Pos columns.")
+        stop("Incorrect genomics coordinates")
     }
     snpdata$index = snpdata$index+1
     snpdata

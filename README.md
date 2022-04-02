@@ -56,10 +56,10 @@ browseVignettes("rSNPdata")
 
 | function name | description |    
 | :-------------- | :---------- |     
-| [filter_snps_samples](./doc/get_snpdata.md) | Create SNPdata onject. the functions in this package require a `SNPdata` object. This can be generated with this function | 
-| [select_chrom](./doc/print.md) | print the SNPdata object | 
-| [drop_snps](./doc/maf.md) | calculate the snp minor allele frequency based on the allelic depth and minor allele frequency | 
-| [drop_samples](./doc/fws.md) | calculate the within-host genetic diversity index  | 
+| [filter_snps_samples](./doc/filter.md) | filter loci and samples from the SNPdata object | 
+| [select_chrom](./doc/select_chrom.md) | select data for a provided list of chromosomes | 
+| [drop_snps](./doc/remove_snp.md) | remove a set of SNPs from the SNPdata object | 
+| [drop_samples](./doc/remove_sample.md) | remove a set of samples from the SNPdata object  | 
 
 
 # TRANSFORMATION
