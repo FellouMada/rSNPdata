@@ -10,7 +10,7 @@
 
 **filter_snps_samples** is a function that is used to filter the SNPdata object. Note that, this must be used only after the MAF and Fws have been calculated
 
-#OPTIONS
+# OPTIONS
 ```
 snpdata: an object of class SNPdata
 min.qual: the minimum call quality of a SNP
