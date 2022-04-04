@@ -4,7 +4,7 @@
 \alias{print.SNPdata}
 \title{Print SNPdata}
 \usage{
-\method{print}{SNPdata}(snpdata)
+print(snpdata)
 }
 \arguments{
 \item{snpdata}{SNPdata object}

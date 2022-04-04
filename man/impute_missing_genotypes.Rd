@@ -10,12 +10,14 @@ snpdata = impute_missing_genotypes(snpdata)
 \item{snpdata}{a SNPdata object}
 
 \item{genotype}{the genotype table from which the missing data will be imputed}
+
+\item{nsim}{an integer. the number of simulations}
 }
 \value{
 a SNPdata object with an additional table named as "Phased_Imputed"
 }
 \description{
-missing genotype imputation based on the MAF at any given locus
+missing genotype imputation based on the MAF at any given locus. Imputation will be done nsim times and imputed data with highest correlation between MAF from raw data and MAF from imputed data will be retained
 }
 \details{
 when both alleles are not supported by any read or the total number of reads supporting both alleles at a given site is < 5, the genotype will be phased based on a bernouli distribition using the MAF as a parameter. Similarly, when the total number of reads is > 5 and the number of reads supporting one of the allele is not 2 times the number of the other allele, the genotype is phased using a bernouli distribution

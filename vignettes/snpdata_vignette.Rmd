@@ -62,7 +62,7 @@ head(snpdata$details)
 
 ## calculate the within-host genetics diversity index (Fws)   
 the `calculate_Fws` function requires a SNPdata object   
-type `?compute_MAF` for more details     
+type `?calculate_Fws` for more details     
 ```{r, eval=FALSE}
 snpdata =  calculate_Fws(snpdata)
 head(snpdata$meta)
@@ -76,16 +76,16 @@ print(snpdata)
 ```
 
 ## mixed genotypes phasing     
-use the `phase_mixed_genotypes` function to phase the mixed genotypes    
+use the `phase_mixed_genotypes` function to phase the mixed genotypes.    
 ```{r eval=FALSE}
-snpdata = phase_mixed_genotypes(snpdata)
+snpdata = phase_mixed_genotypes(snpdata, nsim=100)
 head(snpdata$Phased[,1:5])
 ```
 
 ## impute the missing data   
 use the `impute_missing_genotypes` function to impute the missing genotypes. the `genotype` argument determines which genotype table should be used to impute the missing data ("GT" to impute from raw data, "Phased" to impute from the phased data).    
 ```{r eval=FALSE}
-snpdata = impute_missing_genotypes(snpdata, genotype="GT")
+snpdata = impute_missing_genotypes(snpdata, genotype="GT", nsim=100)
 head(snpdata$Imputed[,1:5])
 ```
 
@@ -97,12 +97,14 @@ print(chrom7_snpdata)
 ```
 
 ## drop a set of SNPs from the data       
-if you want to remove some loci from the data, use the `drop_snps` function and provide it with a data frame with 2 columns, "Chrom" and "Pos", representing the genomic coordinates of the loci to be dropped.     
+if you want to remove some loci from the data, use the `drop_snps` function and provide it with a data frame with 2 columns, "Chrom" and "Pos", representing the genomic coordinates of the loci to be dropped or the chrom, start and end position of the loci to be dropped    
 ```{r eval=FALSE}
 snp.to.be.dropped = chrom7_snpdata$details %>% select(Chrom,Pos)
 idx = sample(1:nrow(snp.to.be.dropped),100, replace = FALSE)
 snp.to.be.dropped = snp.to.be.dropped[idx,]
 reduced_snpdata = drop_snps(chrom7_snpdata, snp.to.be.dropped)
+print(reduced_snpdata)
+reduced_snpdata = drop_snps(chrom7_snpdata, chrom="Pf3D7_10_v3", start=100, end=500)
 print(reduced_snpdata)
 ```
 

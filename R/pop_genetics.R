@@ -11,7 +11,7 @@ calculate_Fst = function(snpdata, groups=NA, from="Country"){
         for(j in (i+1):length(groups)){
             idx2 = which(snpdata$meta[[from]]==groups[j])
             idx2 = paste(idx2, collapse = ",")
-            system(sprintf("wcFst --target %s --background %s --file %s --deltaaf 0.1 --type PL", idx1, id2, snpdata$vcf))
+            system(sprintf("wcFst --target %s --background %s --file %s --deltaaf 0.1 --type PL", idx1, idx2, snpdata$vcf))
         }
     }
 }
