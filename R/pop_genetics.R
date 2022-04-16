@@ -5,7 +5,7 @@
 #' @return SNPdata object with an extra field: Fst
 #' @usage  calculate_wcFst(snpdata, groups=c("Senegal","Gambia"), from="Country")
 #' @export
-calculate_wcFst = function(snpdata, groups=NULL, from=NULL){
+calculate_wcFst = function(snpdata, from=NULL, groups=NULL){
     if(is.null(groups) & is.null(from)){
         stop("Please provide a vector of groups to be compared and the metadata column of interest")
     }else if(is.null(groups) & !is.null(from)){
@@ -128,6 +128,13 @@ calculate_iR = function(snpdata, mat.name="Phased", family="Location", number.co
     my.ibd = getIBDsegments(ped.genotypes = my.geno,parameters = my.param, number.cores = number.cores, minimum.snps = 20, minimum.length.bp = 50000,error = 0.001)
     my.matrix = getIBDmatrix(ped.genotypes = my.geno, ibd.segments = my.ibd)
     my.iR = getIBDiR(ped.genotypes = my.geno,ibd.matrix = my.matrix,groups = NULL)
+    my.iR$adj_pvalue_BH = p.adjust(my.iR$log10_pvalue, method = "BH")
+    if(!("iR" %in% names(snpdata))){
+        snpdata$iR=list()
+    }
+    groups = unique(snpdata$meta[[family]])
+    snpdata$iR[[paste0(groups[1],"_vs_",groups[2])]] = my.iR
+    snpdata
 }
 
 make_ped = function(mat, metadata, family){

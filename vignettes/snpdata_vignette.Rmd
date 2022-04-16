@@ -21,6 +21,7 @@ require("SeqArray")
 require("moimix")
 require("statip")
 require("parallel")
+require("isoRelate")
 vcf="/Users/km28/Documents/Karim/Packages/Input_Data.vcf.gz"
 metadata="/Users/km28/Documents/Karim/Packages/SampleMetadata.txt"
 outDir="/Users/km28/Documents/Karim/Packages/Test"
@@ -127,9 +128,10 @@ print(reduced_snpdata)
 ---
 
 ## Fst
-
+In this package, Weir & Cockerham's Fst is calculated using the `vcflib` tools.   
+The from option specifies the name of the column in the metadata table with the groups between which Fst should be calculated.  
 ```{r eval=FALSE}
-snpdata = calculate_wcFst(snpdata, groups=c("Senegal","Gambia"), from="Country")
+snpdata = calculate_wcFst(snpdata, from="Country", groups=c("Senegal","Gambia"))
 ```
 
 ## IBS
@@ -144,11 +146,18 @@ snpdata = get_ibs(snpdata, mat.name="GT")
 
 ## iR
 ```{r eval=FALSE}
-
+groups = c("DongoroBa","Chogen")
+idx = which(snpdata$meta$Location %in% groups)
+samples.to.be.dropped = snpdata$meta$sample[-(idx)]
+reduced_snpdata = drop_samples(snpdata, samples.to.be.dropped)
+print(reduced_snpdata)
+res.iR = calculate_iR(reduced_snpdata, mat.name="Phased", family="Location", number.cores=4)
+dim(res.iR$iR$Chogen_vs_DongoroBa)
 ```
 
 ## IBD
 ```{r eval=FALSE}
+
 
 ```
 
