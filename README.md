@@ -31,6 +31,11 @@ Index:
   * [phase_mixed_genotypes](#TRANSFORMATION)
   * [impute_missing_genotypes](#TRANSFORMATION)
 - [POPULATION GENETICS PARAMETERS](#PARAMETERS)
+  * [calculate_wcFst](#PARAMETERS)
+  * [calculate_LD](#PARAMETERS)
+  * [calculate_IBS](#PARAMETERS)
+  * [calculate_iR](#PARAMETERS)
+  * [calculate_IBD](#PARAMETERS)
 ---
 
 ## Install   
