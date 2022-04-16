@@ -7,9 +7,10 @@ before installing this package, make sure the following tools and packages are i
 [bcftools](http://www.htslib.org/download/)    
 [tabix](http://www.htslib.org/doc/tabix.html)  
 [vcflib](https://github.com/vcflib/vcflib)
+[vcftools](http://vcftools.sourceforge.net/)
 
 #### R packages     
-[data.table](https://cran.r-project.org/web/packages/data.table/index.html),[dplyr](https://cran.r-project.org/web/packages/dplyr/index.html),[SeqArray](https://www.bioconductor.org/packages/release/bioc/html/SeqArray.html),[moimix](https://github.com/bahlolab/moimix),[statip](https://cran.r-project.org/web/packages/statip/index.html),[parallel](https://stat.ethz.ch/R-manual/R-devel/library/parallel/doc/parallel.pdf)
+[data.table](https://cran.r-project.org/web/packages/data.table/index.html),[dplyr](https://cran.r-project.org/web/packages/dplyr/index.html),[SeqArray](https://www.bioconductor.org/packages/release/bioc/html/SeqArray.html),[moimix](https://github.com/bahlolab/moimix),[statip](https://cran.r-project.org/web/packages/statip/index.html),[parallel](https://stat.ethz.ch/R-manual/R-devel/library/parallel/doc/parallel.pdf),[isoRelate](https://github.com/bahlolab/isoRelate)
 
 ---
 Index:
@@ -29,6 +30,7 @@ Index:
 - [DATA TRANSFORMATION](#TRANSFORMATION)
   * [phase_mixed_genotypes](#TRANSFORMATION)
   * [impute_missing_genotypes](#TRANSFORMATION)
+- [POPULATION GENETICS PARAMETERS](#PARAMETERS)
 ---
 
 ## Install   
@@ -68,5 +70,16 @@ browseVignettes("rSNPdata")
 | :-------------- | :---------- |     
 | [phase_mixed_genotypes](./doc/phase.md) | Phase mixed genotypes based on number of read supporting each allele and Bernoulli distribution. This process will be repeated `nsim` times and data from iteration with highest correlation between MAF phased data and MAF raw data will be retained | 
 | [impute_missing_genotypes](./doc/impute.md) | impute missing genotypes based on minor allele frequency and Bernoulli distribution. This process will be repeated `nsim` times and data from iteration with highest correlation between MAF imputed data and MAF raw data will be retained| 
+
+
+# PARAMETERS
+
+| function name | description |    
+| :-------------- | :---------- |     
+| [calculate_wcFst](./doc/Fst.md) | Calculate Weir & Cockerham's Fst. This is achieved using the vcflib tools | 
+| [calculate_LD](./doc/ld.md) | Calculate LD R^2 between all pair of loci using vcftools| 
+| [calculate_IBS](./doc/ibs.md) | Calculate identity by state matrix | 
+| [calculate_iR](./doc/iR.md) | Calculate the iR index between pairs of populations to determine loci with excess of IBD sharing. The calculation is based on the isoRelate R package | 
+| [calculate_IBD](./doc/ibs.md) | Calculate identity by descent matrix | 
 
 

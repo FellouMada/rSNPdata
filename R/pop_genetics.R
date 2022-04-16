@@ -77,7 +77,7 @@ calculate_LD = function(snpdata, min.r2=0.2, inter.chrom=FALSE, chroms=NULL){
 #' @return SNPdata object with an extra field: IBS
 #' @usage  get_ibs(snpdata, mat.name="GT")
 #' @export
-get_ibs = function(snpdata, mat.name="GT"){
+calculate_IBS = function(snpdata, mat.name="GT"){
     if(!(mat.name %in% names(snpdata))){
         stop("specified genotype matrix does not exist")
     }
@@ -99,7 +99,7 @@ get_ibs = function(snpdata, mat.name="GT"){
     snpdata
 }
 
-get_ibd = function(snpdata){
+calculate_IBD = function(snpdata){
 
 }
 
