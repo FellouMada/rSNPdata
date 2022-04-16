@@ -5,6 +5,8 @@ require("SeqArray")
 require("moimix")
 require("statip")
 require("parallel")
+require("isoRelate")
+
 
 #' Generate the SNPdata object
 #'
@@ -30,7 +32,7 @@ get_snpdata = function(vcf.file=NA, meta.file=NA, output.dir=NA){
     if(is.na(meta.file)) stop("Please provide a metadata file")
     if(!file.exists(meta.file)) stop(meta.file, "not found!")
     if(is.na(output.dir)) stop("Please provide an output directory")
-    if(!dir.exists(output.dir)) stop(output.dir, "not found!")
+    if(!dir.exists(output.dir)) system(sprintf("mkdir -p %s",output.dir))
 
     ## get the sample IDs
     ids = paste0(output.dir,'/','SampleIDs.txt')
@@ -242,6 +244,8 @@ calculate_Fws = function(snpdata){
     fws_overall = data.table(cbind(as.character(sample.id), as.numeric(fws_overall)))
     names(fws_overall) = c("sample","Fws")
     meta=data.frame(snpdata$meta) %>% left_join(fws_overall,by="sample")
+    meta$COI=1
+    meta[which(meta$Fws<=0.95),]$COI=2
     snpdata$meta = meta
     snpdata
 }
@@ -283,9 +287,10 @@ phase_mixed_genotypes = function(snpdata, nsim=100){
 }
 
 phaseData = function(genotype, depth){
-    idx = which(genotype==2)
+    idx = as.numeric(which(genotype==2))
 
     for(j in idx){
+        # print(j)
         ref = as.numeric(unlist(strsplit(depth[j],','))[1])
         alt = as.numeric(unlist(strsplit(depth[j],','))[2])
         if(ref==0 & alt==0){
@@ -313,6 +318,8 @@ phaseData = function(genotype, depth){
                 else genotype[j] = rbern(1, ref.count/(ref.count+alt.count))
             }
         }else if(ref==0 | alt==0){
+            ref.count=sum(genotype==0, na.rm = TRUE)
+            alt.count=sum(genotype==1, na.rm = TRUE)
             if(ref==0 & alt>=5) genotype[j] = 1
             else if(ref==0 & alt<5) genotype[j] = rbern(1, alt.count/(ref.count+alt.count))
             if(alt==0 & ref>=5) genotype[j] = 0
@@ -474,6 +481,7 @@ remove_snps_from_vcf = function(vcf, loci_to_be_retained, path, index=1){
     system(sprintf("cat %s %s > %s", header, correctRows, filteredVcf))
     system(sprintf("bgzip %s", filteredVcf))
     system(sprintf("rm -f %s %s %s", header, body, correctRows))
+    filteredVcf = paste0(path,'/','Filtered_snps_',index,'.vcf.gz')
     return(as.character(filteredVcf))
 }
 

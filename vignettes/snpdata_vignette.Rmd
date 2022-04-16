@@ -34,7 +34,10 @@ devtools::install_github("FellouMada/rSNPdata", build_vignettes = TRUE)
 library(rSNPdata)
 ```
 
-# FUNCTIONS     
+
+---
+# DATA ACCESS AND FILTRATION FUNCTIONS 
+---
 
 ## get SNPdata object      
 the functions in this package require a `SNPdata` object. This can be generated using the `get_snpdata` function with the following arguments:    
@@ -60,19 +63,21 @@ snpdata = compute_MAF(snpdata, include.het=FALSE, mat.name="GT")
 head(snpdata$details)
 ```
 
+## filter the SNPdata object     
+use the `filter_snps_samples` function to remove the SNPs and samples that do not satisfy the user criteria.    
+```{r eval=FALSE}
+snpdata = filter_snps_samples(snpdata, min.qual=10, max.missing.sites=0.2, max.missing.samples=0.2, maf.cutoff=0.01)
+print(snpdata)
+hist(snpdata$details$MAF, 100)
+grid()
+```
+
 ## calculate the within-host genetics diversity index (Fws)   
 the `calculate_Fws` function requires a SNPdata object   
 type `?calculate_Fws` for more details     
 ```{r, eval=FALSE}
 snpdata =  calculate_Fws(snpdata)
 head(snpdata$meta)
-```
-
-## filter the SNPdata object     
-use the `filter_snps_samples` function to remove the SNPs and samples that do not satisfy the user criteria.    
-```{r eval=FALSE}
-snpdata = filter_snps_samples(snpdata, min.qual=10, max.missing.sites=0.2, max.missing.samples=0.2, maf.cutoff=0.01)
-print(snpdata)
 ```
 
 ## mixed genotypes phasing     
@@ -118,5 +123,33 @@ print(reduced_snpdata)
 ```
 
 
+---
+# POPULATION GENETICS FUNCTIONS
+---
 
+## Fst
+
+```{r eval=FALSE}
+snpdata = calculate_wcFst(snpdata, groups=c("Senegal","Gambia"), from="Country")
+```
+
+## IBS
+```{r eval=FALSE}
+snpdata = get_ibs(snpdata, mat.name="GT")
+```
+
+## LD
+```{r eval=FALSE}
+
+```
+
+## iR
+```{r eval=FALSE}
+
+```
+
+## IBD
+```{r eval=FALSE}
+
+```
 
