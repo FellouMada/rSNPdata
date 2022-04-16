@@ -107,10 +107,11 @@ get_ibd = function(snpdata){
 #' @param snpdata SNPdata object
 #' @param mat.name the name of the genotype table to be used. default="Phased"
 #' @param family the name of the column, in the metadata table, to be used to represent the sample's population
+#' @param number.cores the number of cores to be used. default=4
 #' @return SNPdata object with an extra field: iR
-#' @usage  calculate_iR(snpdata, mat.name="Phased", family="Location")
+#' @usage  calculate_iR(snpdata, mat.name="Phased", family="Location", number.cores=4)
 #' @export
-calculate_iR = function(snpdata, mat.name="Phased", family="Location"){
+calculate_iR = function(snpdata, mat.name="Phased", family="Location", number.cores=4){
     if(!(family %in% names(snpdata$meta))){
         stop("No column name ",family," in the metadata table")
     }
@@ -123,8 +124,8 @@ calculate_iR = function(snpdata, mat.name="Phased", family="Location"){
     map = make_map(snpdata$details)
     ped.map = list(ped,map)
     my.geno = getGenotypes(ped.map, reference.ped.map=NULL, maf=0.01, isolate.max.missing=0.2, snp.max.missing=0.2, chromosomes=NULL, input.map.distance="cM", reference.map.distance="cM")
-    my.param = getIBDparameters(ped.genotypes = my.geno, number.cores = 4)
-    my.ibd = getIBDsegments(ped.genotypes = my.geno,parameters = my.param, number.cores = 4, minimum.snps = 20, minimum.length.bp = 50000,error = 0.001)
+    my.param = getIBDparameters(ped.genotypes = my.geno, number.cores = number.cores)
+    my.ibd = getIBDsegments(ped.genotypes = my.geno,parameters = my.param, number.cores = number.cores, minimum.snps = 20, minimum.length.bp = 50000,error = 0.001)
     my.matrix = getIBDmatrix(ped.genotypes = my.geno, ibd.segments = my.ibd)
     my.iR = getIBDiR(ped.genotypes = my.geno,ibd.matrix = my.matrix,groups = NULL)
 }

@@ -271,15 +271,18 @@ phase_mixed_genotypes = function(snpdata, nsim=100){
     path = paste0(dirname(vcf),"/phasing")
     system(sprintf("mkdir -p %s", path))
     correlations = numeric(length = 100)
+    pb = txtProgressBar(min = 0, max = nsim, initial = 0,style = 3)
     for(i in 1:nsim){
-        cat("running simulation ",i,"\n")
+        # cat("running simulation ",i,"\n")
         tmp.snpdata = snpdata
         mat = apply(tmp.snpdata$GT, 1, phaseData, depth=depth)
         tmp.snpdata[["Phased"]]=t(mat)
         saveRDS(t(mat), paste0(path,"/sim",i,".RDS"))
         res.snpdata = compute_MAF(tmp.snpdata, include.het=FALSE, mat.name="Phased")
         correlations[i] = cor(res.snpdata$details[["MAF_Phased"]], res.snpdata$details[["MAF"]])
+        setTxtProgressBar(pb, i)
     }
+    close(pb)
     idx = which(correlations==max(correlations,na.rm = TRUE))
     snpdata[["Phased"]] = readRDS(paste0(path,"/sim",idx[1],".RDS"))
     system(sprintf("rm -rf %s", path))
@@ -347,15 +350,18 @@ impute_missing_genotypes = function(snpdata, genotype="Phased", nsim=100){
     path = paste0(dirname(snpdata$vcf),"/imputing")
     system(sprintf("mkdir -p %s", path))
     correlations = numeric(length = 100)
+    pb = txtProgressBar(min = 0, max = nsim, initial = 0,style = 3)
     for(i in 1:nsim){
-        cat("running simulation ",i,"\n")
+        # cat("running simulation ",i,"\n")
         tmp.snpdata = snpdata
         mat = apply(tmp.snpdata[[field]], 1, impute)
         tmp.snpdata[["Imputed"]]=t(mat)
         saveRDS(t(mat), paste0(path,"/sim",i,".RDS"))
         res.snpdata = compute_MAF(tmp.snpdata, include.het=FALSE, mat.name="Imputed")
         correlations[i] = cor(res.snpdata$details[["MAF_Imputed"]], res.snpdata$details[["MAF"]])
+        setTxtProgressBar(pb, i)
     }
+    close(pb)
     idx = which(correlations==max(correlations,na.rm = TRUE))
     snpdata[["Imputed"]] = readRDS(paste0(path,"/sim",idx[1],".RDS"))
     system(sprintf("rm -rf %s", path))

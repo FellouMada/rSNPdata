@@ -15,7 +15,6 @@ date: `r format(Sys.Date(), "%d/%m/%Y")`
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE,comment = "#>")
-require("rSNPdata")
 require("data.table")
 require("dplyr")
 require("SeqArray")
