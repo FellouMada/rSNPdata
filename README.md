@@ -6,8 +6,8 @@ before installing this package, make sure the following tools and packages are i
 #### tools     
 [bcftools](http://www.htslib.org/download/)    
 [tabix](http://www.htslib.org/doc/tabix.html)  
-[vcflib](https://github.com/vcflib/vcflib)
-[vcftools](http://vcftools.sourceforge.net/)
+[vcflib](https://github.com/vcflib/vcflib)    
+[vcftools](http://vcftools.sourceforge.net/)    
 
 #### R packages     
 [data.table](https://cran.r-project.org/web/packages/data.table/index.html),[dplyr](https://cran.r-project.org/web/packages/dplyr/index.html),[SeqArray](https://www.bioconductor.org/packages/release/bioc/html/SeqArray.html),[moimix](https://github.com/bahlolab/moimix),[statip](https://cran.r-project.org/web/packages/statip/index.html),[parallel](https://stat.ethz.ch/R-manual/R-devel/library/parallel/doc/parallel.pdf),[isoRelate](https://github.com/bahlolab/isoRelate)
@@ -85,6 +85,6 @@ browseVignettes("rSNPdata")
 | [calculate_LD](./doc/ld.md) | Calculate LD R^2 between all pair of loci using vcftools| 
 | [calculate_IBS](./doc/ibs.md) | Calculate identity by state matrix | 
 | [calculate_iR](./doc/iR.md) | Calculate the iR index between pairs of populations to determine loci with excess of IBD sharing. The calculation is based on the isoRelate R package | 
-| [calculate_IBD](./doc/ibs.md) | Calculate identity by descent matrix | 
+| [calculate_IBD](./doc/ibd.md) | Calculate identity by descent matrix | 
 
 

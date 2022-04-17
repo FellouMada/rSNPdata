@@ -2,7 +2,16 @@
 #' @param snpdata SNPdata object
 #' @param groups a vector of string. the differentiation will be estimated between these groups of samples
 #' @param from the metadata column from which these groups belong to
-#' @return SNPdata object with an extra field: Fst
+#' @return SNPdata object with an extra field: Fst. This is a list of data frames that contain the result from a specific comparison. Every data frame contains N rows (where N is the number of loci) and the following 7 columns:
+#' \enumerate{
+#' \item the chromosome ID (type \code{"character"})
+#' \item the SNPs positions (type \code{"numeric"})
+#' \item the allele frequency in the first group (type \code{"numeric"})
+#' \item the allele frequency in the second group (type \code{"numeric"})
+#' \item the resulting Fst values (type \code{"numeric"})
+#' \item the p-values associated with the Fst results (type \code{"numeric"})
+#' \item the p-values corrected for multiple testing using the Benjamini-Hochberg method (type \code{"numeric"})
+#' }
 #' @usage  calculate_wcFst(snpdata, groups=c("Senegal","Gambia"), from="Country")
 #' @export
 calculate_wcFst = function(snpdata, from=NULL, groups=NULL){
@@ -128,7 +137,10 @@ calculate_iR = function(snpdata, mat.name="Phased", family="Location", number.co
     my.ibd = getIBDsegments(ped.genotypes = my.geno,parameters = my.param, number.cores = number.cores, minimum.snps = 20, minimum.length.bp = 50000,error = 0.001)
     my.matrix = getIBDmatrix(ped.genotypes = my.geno, ibd.segments = my.ibd)
     my.iR = getIBDiR(ped.genotypes = my.geno,ibd.matrix = my.matrix,groups = NULL)
-    my.iR$adj_pvalue_BH = p.adjust(my.iR$log10_pvalue, method = "BH")
+    pvalues = as.numeric(as.character(lapply(my.iR$log10_pvalue, get.pvalue)))
+    my.iR$log10_pvalue = pvalues
+    names(my.iR)[8] = "pvalue"
+    my.iR$adj_pvalue_BH = p.adjust(my.iR$pvalues, method = "BH")
     if(!("iR" %in% names(snpdata))){
         snpdata$iR=list()
     }
@@ -136,6 +148,8 @@ calculate_iR = function(snpdata, mat.name="Phased", family="Location", number.co
     snpdata$iR[[paste0(groups[1],"_vs_",groups[2])]] = my.iR
     snpdata
 }
+
+get.pvalue = function(x){10^-x}
 
 make_ped = function(mat, metadata, family){
     mat[mat==1]=2
