@@ -80,11 +80,11 @@ calculate_LD = function(snpdata, min.r2=0.2, inter.chrom=FALSE, chroms=NULL){
     snpdata$LD=ld
 }
 
-#' Calculate IBS matrix between all pairs of isolates
+#' Generate dissimilarity matrix (1-IBS) between all pairs of isolates
 #' @param snpdata SNPdata object
 #' @param mat.name the name of the genotype table to be used. default="GT"
 #' @return SNPdata object with an extra field: IBS
-#' @usage  get_ibs(snpdata, mat.name="GT")
+#' @usage  calculate_IBS(snpdata, mat.name="GT")
 #' @export
 calculate_IBS = function(snpdata, mat.name="GT"){
     if(!(mat.name %in% names(snpdata))){
