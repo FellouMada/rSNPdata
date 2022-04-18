@@ -472,7 +472,7 @@ getGenotypes = function(ped.map, reference.ped.map=NULL, maf=0.01, isolate.max.m
 #' @return SNPdata object with an extra field: relatedness. This will contain the relatedness data frame of 3 columns and its correspondent matrix
 #' @usage  calculate_relatedness(snpdata, mat.name="GT", family="Location", sweepRegions=NULL, groups=c("Chogen","DongoroBa"))
 #' @details The relatedness calculation is based on the model developed by Aimee R. Taylor and co-authors. https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.1009101
-#' @useDynLib rSNPdata makePairs
+#' @useDynLib rSNPdata loglikelihood_cpp
 #' @export
 calculate_relatedness = function(snpdata, mat.name="GT", from="Location", sweepRegions=NULL, groups=NULL){
     # sourceCpp("src/hmmloglikelihood.cpp")
