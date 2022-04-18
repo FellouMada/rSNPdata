@@ -125,7 +125,13 @@ In this package, Weir & Cockerham's Fst is calculated using the `vcflib` tools.
 The from option specifies the name of the column in the metadata table with the groups between which Fst should be calculated. 
 the `calculate_wcFst` returns a `SNPdata` object with an additionnal field named `Fst`. This is a list that contains data frames representing each the Fst results between a given pair-wise population.   
 ```{r eval=FALSE}
+snpdata=get_snpdata(vcf.file = vcf, meta.file = metadata, output.dir = outDir)
+snpdata = compute_MAF(snpdata, include.het=FALSE, mat.name="GT")
+snpdata = filter_snps_samples(snpdata, min.qual=10, max.missing.sites=0.2, max.missing.samples=0.2, maf.cutoff=0.01)
+snpdata =  calculate_Fws(snpdata)
 snpdata = calculate_wcFst(snpdata, from="Country", groups=c("Senegal","Gambia"))
+names(snpdata$Fst)
+head(snpdata$Fst$Senegal_vs_Gambia)
 ```
 
 ## IBS   
@@ -148,7 +154,7 @@ snpdata = calculate_LD(snpdata, min.r2=0.2, inter.chrom=FALSE, chroms=NULL)
 ```{r eval=FALSE}
 groups = c("DongoroBa","Chogen")
 idx = which(snpdata$meta$Location %in% groups)
-samples.to.be.dropped = snpdata$meta$sample[-(idx)]
+samples.to.be.dropped = snpdata$meta$sample[-idx]
 reduced_snpdata = drop_samples(snpdata, samples.to.be.dropped)
 print(reduced_snpdata)
 res.iR = calculate_iR(reduced_snpdata, mat.name="Phased", family="Location", number.cores=4)
@@ -159,7 +165,7 @@ dim(res.iR$iR$Chogen_vs_DongoroBa)
 relatedness between pairs of isolates from a given pairs of population. The relatedness is calculated using the `GT` table. The value of the `from` option is the name of the column in the metadata data frame that represents the sample's population of origin. To remove regions of the genome under selection, use the `sweepRegions` option. You can specify a vector of populations to compute the relatedness for as a value for the groups option.  
 ```{r eval=FALSE}
 ## calculate relatedness between pairs of isolates from Chogen and DongoroBa
-snpdata = calculate_relatedness(snpdata, mat.name="GT", family="Location", sweepRegions=NULL, groups=c("Chogen","DongoroBa"))
+snpdata = calculate_relatedness(snpdata, mat.name="GT", from="Location", sweepRegions=NULL, groups=c("Chogen","DongoroBa"))
 relatedness = snpdata$relatedness$df
 relatedness.matrix = snpdata$relatedness$matrix
 

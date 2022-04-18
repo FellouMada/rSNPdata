@@ -44,7 +44,7 @@ calculate_wcFst = function(snpdata, from=NULL, groups=NULL){
                 tmp$wcFst[idx]=0
             }
             tmp$wcFst_Adj_pvalue_BH = p.adjust(tmp$wcFst_pvalue, method="BH")
-            snpdata$Fst[[paste0(groups[i],"_vs_",groups[j])]] = tmp
+            snpdata[["Fst"]][[paste0(groups[i],"_vs_",groups[j])]] = tmp
         }
     }
     snpdata
@@ -121,7 +121,7 @@ calculate_iR = function(snpdata, mat.name="Phased", family="Location", number.co
     if(!(family %in% names(snpdata$meta))){
         stop("No column name ",family," in the metadata table")
     }
-    if(mat.name=="GT"){
+    if(mat.name=="GT" | !(mat.name %in% names(snpdata)){
         cat("phasing the mixed genotypes\n")
         snpdata = phase_mixed_genotypes(snpdata, nsim=100)
     }
@@ -136,7 +136,7 @@ calculate_iR = function(snpdata, mat.name="Phased", family="Location", number.co
     my.iR = getIBDiR(ped.genotypes = my.geno,ibd.matrix = my.matrix,groups = NULL)
     pvalues = as.numeric(as.character(lapply(my.iR$log10_pvalue, get.pvalue)))
     my.iR$log10_pvalue = pvalues
-    names(my.iR)[8] = "pvalue"
+    names(my.iR)[8] = "pvalues"
     my.iR$adj_pvalue_BH = p.adjust(my.iR$pvalues, method = "BH")
     if(!("iR" %in% names(snpdata))){
         snpdata$iR=list()
@@ -473,10 +473,18 @@ getGenotypes = function(ped.map, reference.ped.map=NULL, maf=0.01, isolate.max.m
 #' @usage  calculate_relatedness(snpdata, mat.name="GT", family="Location", sweepRegions=NULL, groups=c("Chogen","DongoroBa"))
 #' @details The relatedness calculation is based on the model developed by Aimee R. Taylor and co-authors. https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.1009101
 #' @export
-calculate_relatedness = function(snpdata, mat.name="GT", from="Location", sweepRegions=NULL, groups=NULL){
+calculate_relatedness = function(snpdata, mat.name="Imputed", from="Location", sweepRegions=NULL, groups=NULL){
     # sourceCpp("src/hmmloglikelihood.cpp")
     details = snpdata$details
     metadata = snpdata$meta
+    if(mat.name=="GT" | mat.name=="Phased"){
+        cat("Imputing the missing genotypes\n")
+        snpdata = impute_missing_genotypes(snpdata, genotype=mat.name, nsim=10)
+    }else if(mat.name=="Imputed" & !(mat.name %in% names(snpdata)){
+        cat("Imputing the missing genotypes\n")
+        snpdata = impute_missing_genotypes(snpdata, genotype="GT", nsim=10)
+    }
+    mat.name = "Imputed"
     mat = snpdata[[mat.name]]
     if(!is.null(groups) & all(groups %in% unique(metadata[[from]]))){
         pops = groups
@@ -672,7 +680,7 @@ gen_mles = function(res, site1, site2, f=0.3, dir){
 }
 
 compute_rhat_hmm = function(frequencies, distances, Ys, epsilon){
-    ll <- function(k, r) loglikelihood_cpp(k, r, Ys, frequencies, distances, epsilon, rho = 7.4 * 10^(-7))
+    ll <- function(k, r) loglikelihood(k, r, Ys, frequencies, distances, epsilon, rho = 7.4 * 10^(-7)) #loglikelihood_cpp(k, r, Ys, frequencies, distances, epsilon, rho = 7.4 * 10^(-7))
     optimization <- optim(par = c(50, 0.5), fn = function(x) - ll(x[1], x[2]))
     rhat <- optimization$par
     return(rhat)
@@ -732,7 +740,7 @@ run_2country=function(countryA,countryB,f){
                 chrom=chrom,pos=pos))
 }
 
-loglikelihood_cpp = function(k, r, Ys, f, gendist, epsilon, rho = 7.4 * 10^(-7)){
+loglikelihood = function(k, r, Ys, f, gendist, epsilon, rho = 7.4 * 10^(-7)){
     loglikelihood_value = 0
     if (r < 0 | r > 1 | k < 0){
         return(log(0))
@@ -744,26 +752,32 @@ loglikelihood_cpp = function(k, r, Ys, f, gendist, epsilon, rho = 7.4 * 10^(-7))
     ndata = nrow(Ys)
     maxnstates = ncol(f)
     for (idata in 1:ndata){
-        nstates = 0
-        while ((nstates < maxnstates) & (f[idata,nstates] > 1e-20)){
+        nstates = 1
+        print(paste0("idata=",idata))
+        while((nstates <= maxnstates) && (f[idata,nstates] > 1e-20)){
             nstates = nstates+1
         }
         lk0 = 0
         incr = 0
+        print(paste0("nstates=",nstates))
+        print(Ys[idata,])
+        if(nstates>maxnstates) nstates=maxnstates
         for (g in 1:nstates){
             for (gprime in 1:nstates){
-                incr = f[idata, g] * f[idata, gprime]
-                if (Ys[idata,1] == g){
-                    incr = incr * (1 - (nstates - 1) * epsilon)
-                } else {
-                    incr = incr*epsilon
+                if(gprime<=nstates){
+                    incr = f[idata, g] * f[idata, gprime]
+                    if (Ys[idata,1] == g){
+                        incr = incr * (1 - (nstates - 1) * epsilon)
+                    } else {
+                        incr = incr*epsilon
+                    }
+                    if (Ys[idata,2] == gprime){
+                        incr = incr * (1 - (nstates - 1) * epsilon)
+                    } else {
+                        incr = incr*epsilon
+                    }
+                    lk0 = lk0 + incr
                 }
-                if (Ys[idata,2] == gprime){
-                    incr = incr * (1 - (nstates - 1) * epsilon)
-                } else {
-                    incr = incr*epsilon
-                }
-                lk0 = lk0 + incr
             }
         }
         lk1 = 0

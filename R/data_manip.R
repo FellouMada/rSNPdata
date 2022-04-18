@@ -510,14 +510,17 @@ drop_samples = function(snpdata, samples.to.be.dropped){
     tmp_meta= snpdata$meta
     tmp_meta = tmp_meta[-(idx),]
     snpdata$meta = tmp_meta
-    m = which(names(snpdata) %in% c("details","vcf","meta","index"))
-    fields = names(snpdata)[-m]
+    # m = which(names(snpdata) %in% c("details","vcf","meta","index"))
+    fields = c("GT","Phased","Imputed") #names(snpdata)[-m]
     for(field in fields){
-        idx = match(samples.to.be.dropped, colnames(snpdata[[field]]))
-        # print(idx)
-        tmp_meta=snpdata[[field]]
-        tmp_meta = tmp_meta[,-(idx)]
-        snpdata[[field]] = tmp_meta
+        if(field %in% names(snpdata)){
+            idx = match(samples.to.be.dropped, colnames(snpdata[[field]]))
+            m = 1:ncol(snpdata[[field]])
+            m=m[-idx]
+            tmp_meta=snpdata[[field]]
+            tmp_meta = tmp_meta[,m]
+            snpdata[[field]] = tmp_meta
+        }
     }
     tmp.file = paste0(dirname(snpdata$vcf),"/tmp.txt")
     write.table(snpdata$meta$sample, tmp.file, col.names = FALSE, row.names = FALSE, quote = FALSE, sep = "\t")
@@ -530,7 +533,7 @@ remove_samples_from_vcf = function(vcf, samples.to.be.retained, path, index=1){
     target.samples = paste0(path,"/",samples.to.be.retained)
     post.qc = paste0(path,'/','Post_QC_',index,'.vcf.gz')
     system(sprintf("bcftools view -S %s %s -o %s -O z", target.samples, vcf, post.qc))
-    system(sprintf("rm -f %s", vcf))
+    # system(sprintf("rm -f %s", vcf))
     system(sprintf("tabix %s", post.qc))
     return(as.character(post.qc))
 }
