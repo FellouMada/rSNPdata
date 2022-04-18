@@ -475,7 +475,7 @@ getGenotypes = function(ped.map, reference.ped.map=NULL, maf=0.01, isolate.max.m
 #' @useDynLib rSNPdata makePairs
 #' @export
 calculate_relatedness = function(snpdata, mat.name="GT", from="Location", sweepRegions=NULL, groups=NULL){
-    sourceCpp("src/hmmloglikelihood.cpp")
+    # sourceCpp("src/hmmloglikelihood.cpp")
     details = snpdata$details
     metadata = snpdata$meta
     mat = snpdata[[mat.name]]
