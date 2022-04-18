@@ -47,6 +47,7 @@ calculate_wcFst = function(snpdata, from=NULL, groups=NULL){
             Fst[[paste0(groups[i],"_vs_",groups[j])]] = tmp
         }
     }
+    snpdata$Fst = Fst
     snpdata
 }
 
