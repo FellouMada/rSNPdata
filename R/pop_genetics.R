@@ -480,7 +480,7 @@ calculate_relatedness = function(snpdata, mat.name="Imputed", from="Location", s
     if(mat.name=="GT" | mat.name=="Phased"){
         cat("Imputing the missing genotypes\n")
         snpdata = impute_missing_genotypes(snpdata, genotype=mat.name, nsim=10)
-    }else if(mat.name=="Imputed" & (!(mat.name %in% names(snpdata))){
+    }else if(mat.name=="Imputed" & (grepl(mat.name, names(snpdata))==FALSE)){
         cat("Imputing the missing genotypes\n")
         snpdata = impute_missing_genotypes(snpdata, genotype="GT", nsim=10)
     }
