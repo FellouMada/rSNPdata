@@ -35,7 +35,7 @@ Index:
   * [calculate_LD](#PARAMETERS)
   * [calculate_IBS](#PARAMETERS)
   * [calculate_iR](#PARAMETERS)
-  * [calculate_IBD](#PARAMETERS)
+  * [calculate_relatedness](#PARAMETERS)
 ---
 
 ## Install   
@@ -85,6 +85,6 @@ browseVignettes("rSNPdata")
 | [calculate_LD](./doc/ld.md) | Calculate LD R^2 between all pair of loci using vcftools| 
 | [calculate_IBS](./doc/ibs.md) | Calculate identity by state matrix | 
 | [calculate_iR](./doc/iR.md) | Calculate the iR index between pairs of populations to determine loci with excess of IBD sharing. The calculation is based on the isoRelate R package | 
-| [calculate_IBD](./doc/ibd.md) | Calculate identity by descent matrix | 
+| [calculate_relatedness](./doc/relatedness.md) | Calculate relatedness between every pair od isolates for all pairs of population. This is based on the model developed by [Aimee R. Taylor and co-authors](https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.1009101) | 
 
 

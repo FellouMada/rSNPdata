@@ -4,13 +4,13 @@
 #' @param from the metadata column from which these groups belong to
 #' @return SNPdata object with an extra field: Fst. This is a list of data frames that contain the result from a specific comparison. Every data frame contains N rows (where N is the number of loci) and the following 7 columns:
 #' \enumerate{
-#' \item the chromosome ID (type \code{"character"})
-#' \item the SNPs positions (type \code{"numeric"})
-#' \item the allele frequency in the first group (type \code{"numeric"})
-#' \item the allele frequency in the second group (type \code{"numeric"})
-#' \item the resulting Fst values (type \code{"numeric"})
-#' \item the p-values associated with the Fst results (type \code{"numeric"})
-#' \item the p-values corrected for multiple testing using the Benjamini-Hochberg method (type \code{"numeric"})
+#' \item the chromosome ID
+#' \item the SNPs positions
+#' \item the allele frequency in the first group
+#' \item the allele frequency in the second group
+#' \item the resulting Fst values
+#' \item the p-values associated with the Fst results
+#' \item the p-values corrected for multiple testing using the Benjamini-Hochberg method
 #' }
 #' @usage  calculate_wcFst(snpdata, groups=c("Senegal","Gambia"), from="Country")
 #' @export
@@ -108,9 +108,6 @@ calculate_IBS = function(snpdata, mat.name="GT"){
     snpdata
 }
 
-calculate_IBD = function(snpdata){
-
-}
 
 #' Calculate iR index to detect loci with excess of IBD sharing
 #' @param snpdata SNPdata object
@@ -460,5 +457,282 @@ getGenotypes = function(ped.map, reference.ped.map=NULL, maf=0.01, isolate.max.m
     return(return.genotypes)
 
 }
+
+#' Estimate the relatedness between pairs of isolates
+#' @param snpdata SNPdata object
+#' @param mat.name the name of the genotype table to be used. default="GT"
+#' @param from the name of the column, in the metadata table, to be used to represent the sample's population
+#' @param sweepRegions a data frame with the genomic coordinates of the regions of the genome to be discarded. This should contain the following 3 columns:
+#' \enumerate{
+#' \item Chrom: the chromosome ID
+#' \item Start: the start position of the region on the chromosome
+#' \item End: the end position of the region on the chromosome
+#' }
+#' @param groups a vector of character. If specified, relatedness will be generated between these groups
+#' @return SNPdata object with an extra field: relatedness. This will contain the relatedness data frame of 3 columns and its correspondent matrix
+#' @usage  calculate_relatedness(snpdata, mat.name="GT", family="Location", sweepRegions=NULL, groups=c("Chogen","DongoroBa"))
+#' @details The relatedness calculation is based on the model developed by Aimee R. Taylor and co-authors. https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.1009101
+#' @export
+calculate_relatedness = function(snpdata, mat.name="GT", from="Location", sweepRegions=NULL, groups=NULL){
+    sourceCpp("src/hmmloglikelihood.cpp")
+    details = snpdata$details
+    metadata = snpdata$meta
+    mat = snpdata[[mat.name]]
+    if(!is.null(groups) & all(groups %in% unique(metadata[[from]]))){
+        pops = groups
+    }else{
+        pops = unique(metadata[[from]])
+    }
+    cat("creating the genotype data\n")
+    genotypes = constructGenotypeFile(pops, details, mat, metadata, from, sweepRegions)
+    sites = names(genotypes)
+    dir = dirname(snpdata$vcf)
+    ibd = NULL
+    cat("calculating the relatedness\n")
+    for(ii in 1:length(sites)){
+        site1 = sites[ii]
+        for(jj in ii:length(sites)){
+            site2 = sites[jj]
+            ibd = rbind(ibd, gen_mles(genotypes, site1, site2, f=0.3, dir))
+        }
+    }
+    ibd = as.data.table(ibd)
+    names(ibd) = c('iid1','iid2','k','relatedness')
+    ibd = subset(ibd, select = -3)
+    ibd$relatedness = as.numeric(ibd$relatedness)
+    cat("creating the relatedness matrix\n")
+    rmatrix = createRelatednessMatrix(ibd, metadata, pops, from)
+    snpdata$relatedness = list()
+    snpdata$relatedness[["df"]] = ibd
+    snpdata$relatedness[["matrix"]] = rmatrix
+    snpdata
+}
+
+createRelatednessMatrix = function(ibd, metadata, pops, from){
+    idx = NULL
+    for(pop in pops){
+        idx = c(idx, which(metadata[[from]]==pop))
+    }
+    idx = unique(idx)
+    metadata = metadata[idx,]
+    modifier = function(x){gsub('-','.',x)}
+    metadata$sample = as.character(lapply(metadata$sample,modifier))
+    relatednessMatrix = matrix(NA,nrow = length(metadata$sample), ncol = length(metadata$sample))
+    rownames(relatednessMatrix) = metadata$sample
+    colnames(relatednessMatrix) = metadata$sample
+    surLigne = unique(ibd$iid1)
+    for(i in 1:length(surLigne)){
+        # print(paste0('i=',i))
+        ligne = surLigne[i]
+        l = match(ligne,rownames(relatednessMatrix))
+        target = ibd[which(ibd$iid1==ligne),]
+        t = unique(target$iid2)
+        for(j in 1:length(t)){
+            tt = target[which(target$iid2==t[j]),]
+            k = match(t[j],colnames(relatednessMatrix))
+            if(nrow(tt) == 0)
+                relatednessMatrix[l,k] = 0
+            else if(nrow(tt)==1)
+                relatednessMatrix[l,k] = round(as.numeric(tt$relatedness), digits = 5)
+            else if(nrow(tt)>1 & length(unique(tt$iid1))==1 & length(unique(tt$iid2))==1)
+                relatednessMatrix[l,k] = round(as.numeric(tt$relatedness[1]), digits = 5)
+            else if(nrow(tt)>1 & length(unique(tt$iid1))>1 | length(unique(tt$iid2))>1)
+                relatednessMatrix[l,k] = mean(round(as.numeric(tt$relatedness), digits = 5), na.rm = TRUE)
+        }
+    }
+    relatednessMatrix
+}
+
+constructGenotypeFile = function(pops, details, mat, metadata, from, sweepRegions){
+    if(!is.null(sweepRegions)){
+        selectiveRegions = fread(sweepRegions)
+        rtd = NULL
+        for(j in 1:nrow(selectiveRegions))
+            rtd = c(rtd, which(details$Chrom==selectiveRegions$Chrom[j] & (details$Pos>=selectiveRegions$Start[j] & details$Pos<=selectiveRegions$End[j])))
+        rtd = unique(rtd)
+        details = details[-rtd,]
+        mat = mat[-rtd,]
+    }
+    res = list()
+    # pops = unique(metadata[[from]])
+    for(pop in pops){
+        idx = which(metadata[[from]]==pop)
+        s = metadata$sample[idx]
+        m = match(s, colnames(mat))
+        X=mat[,m]
+        chroms=details$Chrom; pos=details$Pos; samps=metadata$sample[idx]
+        L = list(X, chroms, pos, samps)
+        names(L)=c('X','chroms','pos','samps')
+        res[[pop]] = L
+    }
+    res
+}
+
+gen_mles = function(res, site1, site2, f=0.3, dir){
+    nproc=700
+    epsilon=0.001
+    nboot=100
+    Ps=c(0.025,0.975)
+    outFilePrefix = paste0(site1,'_',site2)
+    countryA = res[[site1]]
+    countryB = res[[site2]]
+    outputDir = paste0(dir,'/ibd')
+    system(sprintf("mkdir -p %s", outputDir))
+    if (site1==site2){
+        # within country comparison
+        L=run_country(countryA,f)
+        data_set=L$data_set
+        individual_names=L$individual_names
+        nindividuals=L$nindividuals
+        chrom=L$chrom
+        pos=L$pos
+        name_combinations = matrix(nrow = nindividuals*(nindividuals-1)/2, ncol = 2)
+        Y=matrix(data=NA,nrow =length(name_combinations),ncol = 4 )
+        k=0
+        for ( i in 1 : (nindividuals-1)){
+            j=(1+k):(k+nindividuals-i)
+            name_combinations[j,1]=rep(individual_names[i],each=length(j))
+            name_combinations[j,2]=individual_names[(i+1):nindividuals]
+            k=k+length(j)      # within country comparison
+        }
+    }else{
+        # within country comparison
+        LA=run_country(countryA,f)
+        individual_names_A=LA$individual_names
+        nindividuals_A=LA$nindividuals
+        # # within country comparison
+        LB=run_country(countryB,f)
+        individual_names_B=LB$individual_names
+        nindividuals_B=LB$nindividuals
+        c_offset = dim(LA$data_set)[2]
+        L=run_2country(countryA,countryB,f)
+        data_set=L$data_set
+        individual_names=L$individual_names
+        nindividuals=L$nindividuals
+        chrom=L$chrom
+        pos=L$pos
+        name_combinations <- matrix(nrow = nindividuals_A*nindividuals_B, ncol = 2)
+        Y=matrix(data=NA,nrow =length(name_combinations),ncol = 4 )
+        name_combinations[,1]=rep(individual_names_A,each=nindividuals_B)
+        name_combinations[,2]=rep(individual_names_B,nindividuals_A)
+    }
+    X=as.matrix(data_set)
+    data_set$fs = rowMeans(data_set, na.rm = TRUE) # Calculate frequencies
+    data_set$pos =pos
+    data_set$chrom=chrom
+    data_set$dt <- c(diff(data_set$pos), Inf)
+    pos_change_chrom <- 1 + which(diff(data_set$chrom) != 0) # find places where chromosome changes
+    data_set$dt[pos_change_chrom-1] <- Inf
+    # note NA result is undocumented - could change
+    a0=Rfast::rowCountValues(X, rep(0,dim(X)[1]))  #getting the count of 0 on each row (SNPs)
+    a1=Rfast::rowCountValues(X, rep(1,dim(X)[1]))  #getting the count of 1 on each row (SNPs)
+    a2=Rfast::rowCountValues(X, rep(2,dim(X)[1]))  #getting the count of 2 on each row (SNPs)
+    ana=rowSums(is.na(X))
+    frequencies=cbind(a0,a1,a2)/(dim(X)[2]-ana)
+    if (all.equal(rowSums(frequencies),rep(1,dim(X)[1]))!=TRUE){
+        cat(paste0("frequency ERROR"))
+        return()
+    }
+    # if (iloop < nproc){
+    #     N=floor(dim(name_combinations)[1]/nproc)
+    #     starty=(iloop-1)*N+1
+    #     endy=iloop*N
+    # }else{
+    #     N=dim(name_combinations)[1]-(nproc-1)*floor(dim(name_combinations)[1]/nproc)
+    #     starty = 1+(nproc-1)*floor(dim(name_combinations)[1]/nproc)
+    #     endy=dim(name_combinations)[1]
+    # }
+    starty = 1
+    endy = dim(name_combinations)[1]
+    X=matrix(data=NA,nrow =endy-starty+1,ncol = 4 )
+    for (icombination in starty:endy){
+        #cat(paste0("icombination=",icombination,"\n"))
+        individual1 <- name_combinations[icombination,1]
+        individual2 <- name_combinations[icombination,2]
+        if (site1==site2){
+            # Indices of pair
+            i1 = which(individual1 == names(data_set))  #index of ind1 on the data frame
+            i2 = which(individual2 == names(data_set)) #index of ind2 on the data frame
+        }else{
+            i1 = which(individual1 == individual_names_A) #index of ind1 on the data frame
+            i2 = which(individual2 == individual_names_B) + c_offset #index of ind2 on the data frame
+        }
+        # Extract data
+        subdata <- cbind(data_set[,c("fs","dt")],data_set[,c(i1,i2)])
+        names(subdata) <- c("fs","dt","Yi","Yj") # note fs not used
+        krhat_hmm <- compute_rhat_hmm(frequencies, subdata$dt, cbind(subdata$Yi, subdata$Yj), epsilon)
+        X[icombination-starty+1,1]=individual1
+        X[icombination-starty+1,2]=individual2
+        X[icombination-starty+1,3:4]=krhat_hmm
+
+    }
+    saveRDS(X, file = paste0(outputDir,'/',outFilePrefix,"_",starty,"_",endy,"_",gsub("\\.","p",sprintf("%.4f",f)),".RDS"))
+    X
+}
+
+compute_rhat_hmm = function(frequencies, distances, Ys, epsilon){
+    ll <- function(k, r) loglikelihood_cpp(k, r, Ys, frequencies, distances, epsilon, rho = 7.4 * 10^(-7))
+    optimization <- optim(par = c(50, 0.5), fn = function(x) - ll(x[1], x[2]))
+    rhat <- optimization$par
+    return(rhat)
+}
+
+## Mechanism to generate Ys given fs, distances, k, r, epsilon
+simulate_Ys_hmm <- function(frequencies, distances, k, r, epsilon){
+    Ys <- simulate_data(frequencies, distances, k = k, r = r, epsilon, rho = 7.4 * 10^(-7))
+    return(Ys)
+}
+
+
+run_country=function(countryA,f){
+    matchy=function(x){regmatches(x, regexec('_(.*?)\\_', x))[[1]][2]}
+    L=countryA  #readRDS(countryA)
+    q=data.frame(L$X)
+    q=lapply(q,function(x) as.integer(x))
+    Q=matrix(unlist(q), ncol = length(q[[1]]), byrow = TRUE)
+    maf=colSums(Q==1,na.rm =TRUE)/colSums(Q<=1,na.rm=TRUE) #colSums(!is.na(Q))
+    i=which(colSums(Q==0,na.rm =TRUE)<colSums(Q==1,na.rm =TRUE))
+    maf[i]=colSums(Q[,i]==0,na.rm =TRUE)/colSums(Q[,i]<=1,na.rm=TRUE) #colSums(!is.na(Q[,i]))
+    j=which(maf<=f)
+    data_set = data.frame(q)[-j,]
+    # Create indices for pairwise comparisons
+    individual_names <- names(q)
+    nindividuals <- length(individual_names)
+    chrom=as.integer(unlist(lapply(L$chroms[-j],matchy)))
+    pos=L$pos[-j]
+    return(list(data_set=data_set,j=j,
+                individual_names=individual_names,nindividuals=nindividuals,
+                chrom=chrom,pos=pos))
+}
+
+run_2country=function(countryA,countryB,f){
+    matchy=function(x){regmatches(x, regexec('_(.*?)\\_', x))[[1]][2]}
+    Z=countryA  #readRDS(countryA)
+    M=countryB  #readRDS(countryB)
+    X=cbind(Z$X,M$X)
+    samps=c(Z$samps,M$samps)
+    chroms=c(Z$chroms)
+    pos=c(Z$pos)#
+    q=data.frame(X)
+    q=lapply(q,function(x) as.integer(x))
+    Q=matrix(unlist(q), ncol = length(q[[1]]), byrow = TRUE)
+    maf=colSums(Q==1,na.rm =TRUE)/colSums(Q<=1,na.rm=TRUE) #colSums(!is.na(Q))
+    i=which(colSums(Q==0,na.rm =TRUE)<colSums(Q==1,na.rm =TRUE))
+    maf[i]=colSums(Q[,i]==0,na.rm =TRUE)/colSums(Q[,i]<=1,na.rm=TRUE) #colSums(!is.na(Q[,i]))
+    j=which(maf<=f)
+    data_set = data.frame(q)[-j,]
+    # Create indices for pairwise comparisons
+    individual_names <- names(q)
+    nindividuals <- length(individual_names)
+    chrom=as.integer(unlist(lapply(chroms[-j],matchy)))
+    pos=pos[-j]
+    return(list(data_set=data_set,j=j,
+                individual_names=individual_names,nindividuals=nindividuals,
+                chrom=chrom,pos=pos))
+}
+
+
+
+
 
 
