@@ -6,7 +6,6 @@ require("moimix")
 require("statip")
 require("parallel")
 require("isoRelate")
-require("Rcpp")
 require("Rfast")
 
 
@@ -18,12 +17,12 @@ require("Rfast")
 #' @param meta.file the metadata file
 #' @param output.dir the path to the folder where to store the output files
 #' @return an object of class SNPdata with 5 elements
-#' \describe{
-#'   \item{meta}{data frame that contains the sample metadata}
-#'   \item{details}{a data frame with SNPs genomic coordinates, fraction of missing data per SNP}
-#'   \item{GT}{an integer matrix with the genotype data. 0='reference allele', 1='alternate allele', 2='mixed allele', NA='missing allele'}
-#'   \item{vcf}{the vcf file from which the data is generated}
-#'   \item{index}{an integer}
+#' \enumerate{
+#'   \item meta: a data frame that contains the sample's metadata
+#'   \item details: a data frame with SNPs genomic coordinates, fraction of missing data per SNP
+#'   \item GT: an integer matrix with the genotype data. 0='reference allele', 1='alternate allele', 2='mixed allele', NA='missing allele'
+#'   \item vcf: the vcf file from which the data is generated
+#'   \item index: an integer
 #'   }
 #' @details use the print(snpdata) function to print the created object
 #' @usage snpdata=get_snpdata(vcf.file = "file.vcf.gz", meta.file = "file.txt", output.dir = "/path/to/output/dir")
@@ -156,9 +155,9 @@ filter_snps_samples=function (snpdata, min.qual=10, max.missing.sites=0.2, max.m
 #' @param include.het whether to account for the heterozygous allele or not. this is only used when mat.name="GT"
 #' @param mat.name the name of the matrix to use. default is "GT"
 #' @return a SNPdata object with 2 additional columns in the details data frame
-#' \describe{
-#'   \item{MAF}{minor allele frequency of each snps}
-#'   \item{MAF_allele}{1 if the alternate allele is the minor allele. 0 otherwise}
+#' \enumerate{
+#'   \item MAF: {minor allele frequency of each snps
+#'   \item MAF_allele: 1 if the alternate allele is the minor allele. 0 otherwise
 #' }
 #' @details if include.het=FALSE, the mixed allele will not be considered in the MAF calculation
 #' @usage snpdata = compute_MAF(snpdata, include.het=FALSE, mat.name="GT")
@@ -228,9 +227,9 @@ getMaf = function(mat){
 #' Fws is the within host genetic diversity
 #' @param snpdata a SNPdata object
 #' @return a SNPdata object with an additional column in the meta table
-#' \describe{
-#'   \item{Fws}{within host genetic diversity value}
-#'   \item{COI}{the complexity of infection: 1 for Fws>0.95, 2 for Fws<=0.95}
+#' \enumerate{
+#'   \item Fws: within host genetic diversity value
+#'   \item COI: the complexity of infection: 1 for Fws>0.95, 2 for Fws<=0.95
 #' }
 #' @usage snpdata =  calculate_Fws(snpdata)
 #' @export

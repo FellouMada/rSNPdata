@@ -35,10 +35,6 @@ library(rSNPdata)
 ```
 
 
----
-# DATA ACCESS AND FILTRATION FUNCTIONS 
----
-
 ## get SNPdata object      
 the functions in this package require a `SNPdata` object. This can be generated using the `get_snpdata` function with the following arguments:    
 1. the input VCF file     
@@ -122,10 +118,6 @@ reduced_snpdata = drop_samples(reduced_snpdata, samples.to.be.dropped)
 print(reduced_snpdata)
 ```
 
-
----
-# POPULATION GENETICS FUNCTIONS
----
 
 ## Fst
 In this package, Weir & Cockerham's Fst is calculated using the `vcflib` tools.   

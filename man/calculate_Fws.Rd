@@ -13,6 +13,7 @@ snpdata =  calculate_Fws(snpdata)
 a SNPdata object with an additional column in the meta table
 \describe{
   \item{Fws}{within host genetic diversity value}
+  \item{COI}{the complexity of infection: 1 for Fws>0.95, 2 for Fws<=0.95}
 }
 }
 \description{

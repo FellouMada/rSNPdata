@@ -2,6 +2,11 @@
 
 S3method(print,SNPdata)
 export(calculate_Fws)
+export(calculate_IBS)
+export(calculate_LD)
+export(calculate_iR)
+export(calculate_relatedness)
+export(calculate_wcFst)
 export(compute_MAF)
 export(drop_samples)
 export(drop_snps)

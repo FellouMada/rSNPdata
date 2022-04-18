@@ -12,7 +12,7 @@
 #' \item the p-values associated with the Fst results
 #' \item the p-values corrected for multiple testing using the Benjamini-Hochberg method
 #' }
-#' @usage  calculate_wcFst(snpdata, groups=c("Senegal","Gambia"), from="Country")
+#' @usage  snpdata = calculate_wcFst(snpdata, groups=c("Senegal","Gambia"), from="Country")
 #' @export
 calculate_wcFst = function(snpdata, from=NULL, groups=NULL){
     if(is.null(groups) & is.null(from)){
@@ -56,7 +56,7 @@ calculate_wcFst = function(snpdata, from=NULL, groups=NULL){
 #' @param inter.chrom whether to calculate inter-chromosomal LD. FALSE by default
 #' @param chroms a vector of chromosome names for which LD should be calculated
 #' @return SNPdata object with an extra field: LD
-#' @usage  calculate_LD(snpdata, min.r2=0.2, inter.chrom=FALSE, chroms=c("Pf3D7_04_v3","Pf3D7_05_v3"))
+#' @usage  snpdata = calculate_LD(snpdata, min.r2=0.2, inter.chrom=FALSE, chroms=c("Pf3D7_04_v3","Pf3D7_05_v3"))
 #' @details the output file from LD calculation could be large. In order to reduce the size of that file, it's recommended to specify the list of chromosomes for which LD should be calculated using the `chroms` option
 #' @export
 calculate_LD = function(snpdata, min.r2=0.2, inter.chrom=FALSE, chroms=NULL){
@@ -84,7 +84,7 @@ calculate_LD = function(snpdata, min.r2=0.2, inter.chrom=FALSE, chroms=NULL){
 #' @param snpdata SNPdata object
 #' @param mat.name the name of the genotype table to be used. default="GT"
 #' @return SNPdata object with an extra field: IBS
-#' @usage  calculate_IBS(snpdata, mat.name="GT")
+#' @usage  snpdata = calculate_IBS(snpdata, mat.name="GT")
 #' @export
 calculate_IBS = function(snpdata, mat.name="GT"){
     if(!(mat.name %in% names(snpdata))){
@@ -115,7 +115,7 @@ calculate_IBS = function(snpdata, mat.name="GT"){
 #' @param family the name of the column, in the metadata table, to be used to represent the sample's population
 #' @param number.cores the number of cores to be used. default=4
 #' @return SNPdata object with an extra field: iR
-#' @usage  calculate_iR(snpdata, mat.name="Phased", family="Location", number.cores=4)
+#' @usage  snpdata = calculate_iR(snpdata, mat.name="Phased", family="Location", number.cores=4)
 #' @export
 calculate_iR = function(snpdata, mat.name="Phased", family="Location", number.cores=4){
     if(!(family %in% names(snpdata$meta))){
@@ -472,7 +472,6 @@ getGenotypes = function(ped.map, reference.ped.map=NULL, maf=0.01, isolate.max.m
 #' @return SNPdata object with an extra field: relatedness. This will contain the relatedness data frame of 3 columns and its correspondent matrix
 #' @usage  calculate_relatedness(snpdata, mat.name="GT", family="Location", sweepRegions=NULL, groups=c("Chogen","DongoroBa"))
 #' @details The relatedness calculation is based on the model developed by Aimee R. Taylor and co-authors. https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.1009101
-#' @useDynLib rSNPdata loglikelihood_cpp
 #' @export
 calculate_relatedness = function(snpdata, mat.name="GT", from="Location", sweepRegions=NULL, groups=NULL){
     # sourceCpp("src/hmmloglikelihood.cpp")
@@ -733,7 +732,72 @@ run_2country=function(countryA,countryB,f){
                 chrom=chrom,pos=pos))
 }
 
+loglikelihood_cpp = function(k, r, Ys, f, gendist, epsilon, rho = 7.4 * 10^(-7)){
+    loglikelihood_value = 0
+    if (r < 0 | r > 1 | k < 0){
+        return(log(0))
+    }
+    current_predictive = numeric(length = 2)
+    current_predictive[1] = 1 - r
+    current_predictive[2] = r
+    current_filter = numeric(length = 2)
+    ndata = nrow(Ys)
+    maxnstates = ncol(f)
+    for (idata in 1:ndata){
+        nstates = 0
+        while ((nstates < maxnstates) & (f[idata,nstates] > 1e-20)){
+            nstates = nstates+1
+        }
+        lk0 = 0
+        incr = 0
+        for (g in 1:nstates){
+            for (gprime in 1:nstates){
+                incr = f[idata, g] * f[idata, gprime]
+                if (Ys[idata,1] == g){
+                    incr = incr * (1 - (nstates - 1) * epsilon)
+                } else {
+                    incr = incr*epsilon
+                }
+                if (Ys[idata,2] == gprime){
+                    incr = incr * (1 - (nstates - 1) * epsilon)
+                } else {
+                    incr = incr*epsilon
+                }
+                lk0 = lk0 + incr
+            }
+        }
+        lk1 = 0
+        incr = 0
 
+        for (g in 1:nstates){
+          incr = f[idata, g]
+          if (Ys[idata,1] == g){
+            incr = incr * (1 - (nstates - 1) * epsilon)
+          } else {
+            incr = incr*epsilon
+          }
+          if (Ys[idata,2] == g){
+            incr = incr * (1 - (nstates - 1) * epsilon)
+          } else {
+            incr = incr*epsilon
+          }
+          lk1 = lk1+incr
+        }
+        current_filter[1] = current_predictive[1] * lk0
+        current_filter[2] = current_predictive[2] * lk1
+        l_idata = current_filter[1] + current_filter[2]
+        loglikelihood_value = loglikelihood_value + log(l_idata)
+        if (idata < ndata-1){
+          current_filter = current_filter / l_idata
+          exp_ = exp(- k * rho * gendist[idata])
+          a01 = r * (1 - exp_)
+          a11 = r + (1-r) * exp_
+          current_predictive[2] = current_filter[1] * a01 + current_filter[2] * a11
+          current_predictive[1] = 1 - current_predictive[2]
+        }
+    }
+    return(loglikelihood_value)
+}
 
 
 
