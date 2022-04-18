@@ -121,9 +121,9 @@ calculate_iR = function(snpdata, mat.name="Phased", family="Location", number.co
     if(!(family %in% names(snpdata$meta))){
         stop("No column name ",family," in the metadata table")
     }
-    if(mat.name=="GT" | !(mat.name %in% names(snpdata)){
+    if(mat.name=="GT" | mat.name=="Phased"){
         cat("phasing the mixed genotypes\n")
-        snpdata = phase_mixed_genotypes(snpdata, nsim=100)
+        snpdata = phase_mixed_genotypes(snpdata, nsim=10)
     }
     ped = make_ped(snpdata[[mat.name]], snpdata$meta, family)
     ped$sex=as.numeric(ped$sex)
@@ -480,7 +480,7 @@ calculate_relatedness = function(snpdata, mat.name="Imputed", from="Location", s
     if(mat.name=="GT" | mat.name=="Phased"){
         cat("Imputing the missing genotypes\n")
         snpdata = impute_missing_genotypes(snpdata, genotype=mat.name, nsim=10)
-    }else if(mat.name=="Imputed" & !(mat.name %in% names(snpdata)){
+    }else if(mat.name=="Imputed" & (!(mat.name %in% names(snpdata))){
         cat("Imputing the missing genotypes\n")
         snpdata = impute_missing_genotypes(snpdata, genotype="GT", nsim=10)
     }
