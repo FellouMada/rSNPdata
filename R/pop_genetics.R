@@ -477,7 +477,7 @@ calculate_relatedness = function(snpdata, mat.name="Imputed", from="Location", s
     # sourceCpp("src/hmmloglikelihood.cpp")
     details = snpdata$details
     metadata = snpdata$meta
-    if((mat.name=="Imputed") & (grepl("Imputed", names(snpdata))==FALSE)){
+    if((mat.name=="Imputed") & (!("Imputed" %in% names(snpdata))){
         mat.name="GT"
         cat("Imputing the missing genotypes\n")
         snpdata = impute_missing_genotypes(snpdata, genotype=mat.name, nsim=10)

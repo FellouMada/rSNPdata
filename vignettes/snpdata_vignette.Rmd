@@ -157,6 +157,7 @@ idx = which(snpdata$meta$Location %in% groups)
 samples.to.be.dropped = snpdata$meta$sample[-idx]
 reduced_snpdata = drop_samples(snpdata, samples.to.be.dropped)
 print(reduced_snpdata)
+reduced_snpdata =  calculate_Fws(reduced_snpdata)
 res.iR = calculate_iR(reduced_snpdata, mat.name="Phased", family="Location", number.cores=4)
 dim(res.iR$iR$Chogen_vs_DongoroBa)
 ```
