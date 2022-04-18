@@ -162,8 +162,23 @@ res.iR = calculate_iR(reduced_snpdata, mat.name="Phased", family="Location", num
 dim(res.iR$iR$Chogen_vs_DongoroBa)
 ```
 
-## IBD
+## relatedness
+relatedness between pairs of isolates from a given pairs of population. The relatedness is calculated using the `GT` table. The value of the `from` option is the name of the column in the metadata data frame that represents the sample's population of origin. To remove regions of the genome under selection, use the `sweepRegions` option. You can specify a vector of populations to compute the relatedness for as a value for the groups option.  
 ```{r eval=FALSE}
+## calculate relatedness between pairs of isolates from Chogen and DongoroBa
+snpdata = calculate_relatedness(snpdata, mat.name="GT", family="Location", sweepRegions=NULL, groups=c("Chogen","DongoroBa"))
+relatedness = snpdata$relatedness$df
+relatedness.matrix = snpdata$relatedness$matrix
+
+## calculate relatedness between pairs of isolates from all locations
+snpdata = calculate_relatedness(snpdata, mat.name="GT", family="Location", sweepRegions=NULL, groups=NULL)
+
+## calculate relatedness between pairs of isolates from all locations after excluding the selective sweep regions
+Chrom = c("Pf3D7_04_v3","Pf3D7_05_v3","Pf3D7_07_v3")
+Start = c(723088, 932890, 378222)
+End = c(774914, 987149, 431317)
+selection.region = data.frame(cbind(Chrom, Start, End), stringsAsFactors = FALSE)
+snpdata = calculate_relatedness(snpdata, mat.name="GT", family="Location", sweepRegions=selection.region, groups=NULL)
 
 
 ```
