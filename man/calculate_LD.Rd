@@ -4,7 +4,7 @@
 \alias{calculate_LD}
 \title{Calculate LD R^2 between pairs of loci}
 \usage{
-calculate_LD(snpdata, min.r2=0.2, inter.chrom=FALSE, chroms=c("Pf3D7_04_v3","Pf3D7_05_v3"))
+snpdata = calculate_LD(snpdata, min.r2=0.2, inter.chrom=FALSE, chroms=c("Pf3D7_04_v3","Pf3D7_05_v3"))
 }
 \arguments{
 \item{snpdata}{SNPdata object}

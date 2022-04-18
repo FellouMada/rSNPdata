@@ -4,7 +4,7 @@
 \alias{calculate_IBS}
 \title{Generate dissimilarity matrix (1-IBS) between all pairs of isolates}
 \usage{
-calculate_IBS(snpdata, mat.name="GT")
+snpdata = calculate_IBS(snpdata, mat.name="GT")
 }
 \arguments{
 \item{snpdata}{SNPdata object}

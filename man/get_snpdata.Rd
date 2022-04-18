@@ -15,12 +15,12 @@ snpdata=get_snpdata(vcf.file = "file.vcf.gz", meta.file = "file.txt", output.dir
 }
 \value{
 an object of class SNPdata with 5 elements
-\describe{
-  \item{meta}{data frame that contains the sample metadata}
-  \item{details}{a data frame with SNPs genomic coordinates, fraction of missing data per SNP}
-  \item{GT}{an integer matrix with the genotype data. 0='reference allele', 1='alternate allele', 2='mixed allele', NA='missing allele'}
-  \item{vcf}{the vcf file from which the data is generated}
-  \item{index}{an integer}
+\enumerate{
+  \item meta: a data frame that contains the sample's metadata
+  \item details: a data frame with SNPs genomic coordinates, fraction of missing data per SNP
+  \item GT: an integer matrix with the genotype data. 0='reference allele', 1='alternate allele', 2='mixed allele', NA='missing allele'
+  \item vcf: the vcf file from which the data is generated
+  \item index: an integer
   }
 }
 \description{

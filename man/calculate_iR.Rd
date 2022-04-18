@@ -4,7 +4,7 @@
 \alias{calculate_iR}
 \title{Calculate iR index to detect loci with excess of IBD sharing}
 \usage{
-calculate_iR(snpdata, mat.name="Phased", family="Location", number.cores=4)
+snpdata = calculate_iR(snpdata, mat.name="Phased", family="Location", number.cores=4)
 }
 \arguments{
 \item{snpdata}{SNPdata object}

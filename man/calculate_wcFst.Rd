@@ -4,7 +4,7 @@
 \alias{calculate_wcFst}
 \title{Calculate Weir & Cockerham's Fst}
 \usage{
-calculate_wcFst(snpdata, groups=c("Senegal","Gambia"), from="Country")
+snpdata = calculate_wcFst(snpdata, groups=c("Senegal","Gambia"), from="Country")
 }
 \arguments{
 \item{snpdata}{SNPdata object}

@@ -14,11 +14,7 @@ snpdata = compute_MAF(snpdata, include.het=FALSE, mat.name="GT")
 \item{mat.name}{the name of the matrix to use. default is "GT"}
 }
 \value{
-a SNPdata object with 2 additional columns in the details data frame
-\describe{
-  \item{MAF}{minor allele frequency of each snps}
-  \item{MAF_allele}{1 if the alternate allele is the minor allele. 0 otherwise}
-}
+
 }
 \description{
 Uses the SNPdata object to calculate the MAF at every loci
