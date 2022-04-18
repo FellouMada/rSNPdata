@@ -128,7 +128,6 @@ the `calculate_wcFst` returns a `SNPdata` object with an additionnal field named
 snpdata=get_snpdata(vcf.file = vcf, meta.file = metadata, output.dir = outDir)
 snpdata = compute_MAF(snpdata, include.het=FALSE, mat.name="GT")
 snpdata = filter_snps_samples(snpdata, min.qual=10, max.missing.sites=0.2, max.missing.samples=0.2, maf.cutoff=0.01)
-snpdata =  calculate_Fws(snpdata)
 snpdata = calculate_wcFst(snpdata, from="Country", groups=c("Senegal","Gambia"))
 names(snpdata$Fst)
 head(snpdata$Fst$Senegal_vs_Gambia)

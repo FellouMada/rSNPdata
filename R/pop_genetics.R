@@ -23,7 +23,7 @@ calculate_wcFst = function(snpdata, from=NULL, groups=NULL){
         stop("not all specified groups belong to the ", from, "column of the metadata table")
     }
     system(sprintf("tabix %s", snpdata$vcf))
-    snpdata$Fst=list()
+    Fst=list()
     for(i in 1:(length(groups)-1)){
         idx1 = which(snpdata$meta[[from]]==groups[i])
         idx1 = paste(idx1, collapse = ",")
@@ -44,7 +44,7 @@ calculate_wcFst = function(snpdata, from=NULL, groups=NULL){
                 tmp$wcFst[idx]=0
             }
             tmp$wcFst_Adj_pvalue_BH = p.adjust(tmp$wcFst_pvalue, method="BH")
-            snpdata[["Fst"]][[paste0(groups[i],"_vs_",groups[j])]] = tmp
+            Fst[[paste0(groups[i],"_vs_",groups[j])]] = tmp
         }
     }
     snpdata
