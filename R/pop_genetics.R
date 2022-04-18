@@ -477,15 +477,17 @@ calculate_relatedness = function(snpdata, mat.name="Imputed", from="Location", s
     # sourceCpp("src/hmmloglikelihood.cpp")
     details = snpdata$details
     metadata = snpdata$meta
+    if((mat.name=="Imputed") & (grepl("Imputed", names(snpdata))==FALSE)){
+        mat.name="GT"
+        cat("Imputing the missing genotypes\n")
+        snpdata = impute_missing_genotypes(snpdata, genotype=mat.name, nsim=10)
+    }
     if(mat.name=="GT" | mat.name=="Phased"){
         cat("Imputing the missing genotypes\n")
         snpdata = impute_missing_genotypes(snpdata, genotype=mat.name, nsim=10)
-    }else if(mat.name=="Imputed" & (grepl(mat.name, names(snpdata))==FALSE)){
-        cat("Imputing the missing genotypes\n")
-        snpdata = impute_missing_genotypes(snpdata, genotype="GT", nsim=10)
     }
-    mat.name = "Imputed"
-    mat = snpdata[[mat.name]]
+    # mat.name = "Imputed"
+    mat = snpdata[["Imputed"]]
     if(!is.null(groups) & all(groups %in% unique(metadata[[from]]))){
         pops = groups
     }else{
@@ -496,11 +498,11 @@ calculate_relatedness = function(snpdata, mat.name="Imputed", from="Location", s
     sites = names(genotypes)
     dir = dirname(snpdata$vcf)
     ibd = NULL
-    cat("calculating the relatedness\n")
     for(ii in 1:length(sites)){
         site1 = sites[ii]
         for(jj in ii:length(sites)){
             site2 = sites[jj]
+            cat("calculating the relatedness between ",site1," and ",site2,"\n")
             ibd = rbind(ibd, gen_mles(genotypes, site1, site2, f=0.3, dir))
         }
     }
@@ -753,14 +755,14 @@ loglikelihood = function(k, r, Ys, f, gendist, epsilon, rho = 7.4 * 10^(-7)){
     maxnstates = ncol(f)
     for (idata in 1:ndata){
         nstates = 1
-        print(paste0("idata=",idata))
+        # print(paste0("idata=",idata))
         while((nstates <= maxnstates) && (f[idata,nstates] > 1e-20)){
             nstates = nstates+1
         }
         lk0 = 0
         incr = 0
-        print(paste0("nstates=",nstates))
-        print(Ys[idata,])
+        # print(paste0("nstates=",nstates))
+        # print(Ys[idata,])
         if(nstates>maxnstates) nstates=maxnstates
         for (g in 1:nstates){
             for (gprime in 1:nstates){

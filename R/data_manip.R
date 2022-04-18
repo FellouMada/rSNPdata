@@ -273,7 +273,7 @@ phase_mixed_genotypes = function(snpdata, nsim=100){
     depth = as.matrix(subset(depth, select = -c(1:2)))
     path = paste0(dirname(vcf),"/phasing")
     system(sprintf("mkdir -p %s", path))
-    correlations = numeric(length = 100)
+    correlations = numeric(length = nsim)
     pb = txtProgressBar(min = 0, max = nsim, initial = 0,style = 3)
     for(i in 1:nsim){
         # cat("running simulation ",i,"\n")
@@ -352,7 +352,7 @@ impute_missing_genotypes = function(snpdata, genotype="Phased", nsim=100){
     # genotype = snpdata[[genotype]]
     path = paste0(dirname(snpdata$vcf),"/imputing")
     system(sprintf("mkdir -p %s", path))
-    correlations = numeric(length = 100)
+    correlations = numeric(length = nsim)
     pb = txtProgressBar(min = 0, max = nsim, initial = 0,style = 3)
     for(i in 1:nsim){
         # cat("running simulation ",i,"\n")
@@ -372,7 +372,7 @@ impute_missing_genotypes = function(snpdata, genotype="Phased", nsim=100){
 }
 
 impute = function(genotype){
-    idx = which(genotype==2)
+    idx = as.numeric(which(is.na(genotype)))
     for(j in idx){
         ref = length(which(genotype==0))
         alt = length(which(genotype==1))

@@ -165,6 +165,8 @@ dim(res.iR$iR$Chogen_vs_DongoroBa)
 relatedness between pairs of isolates from a given pairs of population. The relatedness is calculated using the `GT` table. The value of the `from` option is the name of the column in the metadata data frame that represents the sample's population of origin. To remove regions of the genome under selection, use the `sweepRegions` option. You can specify a vector of populations to compute the relatedness for as a value for the groups option.  
 ```{r eval=FALSE}
 ## calculate relatedness between pairs of isolates from Chogen and DongoroBa
+snpdata = phase_mixed_genotypes(snpdata, nsim=5)
+snpdata = impute_missing_genotypes(snpdata, genotype="GT", nsim=10)
 snpdata = calculate_relatedness(snpdata, mat.name="GT", from="Location", sweepRegions=NULL, groups=c("Chogen","DongoroBa"))
 relatedness = snpdata$relatedness$df
 relatedness.matrix = snpdata$relatedness$matrix
