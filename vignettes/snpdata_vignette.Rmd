@@ -23,6 +23,7 @@ require("statip")
 require("parallel")
 require("isoRelate")
 require("Rfast")
+require("utils")
 vcf="/Users/km28/Documents/Karim/Packages/Input_Data.vcf.gz"
 metadata="/Users/km28/Documents/Karim/Packages/SampleMetadata.txt"
 outDir="/Users/km28/Documents/Karim/Packages/Test"
