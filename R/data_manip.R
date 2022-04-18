@@ -7,9 +7,8 @@ require("statip")
 require("parallel")
 require("isoRelate")
 require("Rcpp")
-require("fst")
 require("Rfast")
-require("doParallel")
+
 
 
 #' Generate the SNPdata object

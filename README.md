@@ -10,7 +10,7 @@ before installing this package, make sure the following tools and packages are i
 [vcftools](http://vcftools.sourceforge.net/)    
 
 #### R packages     
-[data.table](https://cran.r-project.org/web/packages/data.table/index.html),[dplyr](https://cran.r-project.org/web/packages/dplyr/index.html),[SeqArray](https://www.bioconductor.org/packages/release/bioc/html/SeqArray.html),[moimix](https://github.com/bahlolab/moimix),[statip](https://cran.r-project.org/web/packages/statip/index.html),[parallel](https://stat.ethz.ch/R-manual/R-devel/library/parallel/doc/parallel.pdf),[isoRelate](https://github.com/bahlolab/isoRelate)
+[data.table](https://cran.r-project.org/web/packages/data.table/index.html),[dplyr](https://cran.r-project.org/web/packages/dplyr/index.html),[SeqArray](https://www.bioconductor.org/packages/release/bioc/html/SeqArray.html),[moimix](https://github.com/bahlolab/moimix),[statip](https://cran.r-project.org/web/packages/statip/index.html),[parallel](https://stat.ethz.ch/R-manual/R-devel/library/parallel/doc/parallel.pdf),[isoRelate](https://github.com/bahlolab/isoRelate),[Rcpp](https://cran.r-project.org/web/packages/Rcpp/index.html),[Rfast](https://cran.r-project.org/web/packages/Rfast/index.html)
 
 ---
 Index:

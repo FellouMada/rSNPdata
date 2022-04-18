@@ -506,6 +506,7 @@ calculate_relatedness = function(snpdata, mat.name="GT", from="Location", sweepR
     snpdata$relatedness = list()
     snpdata$relatedness[["df"]] = ibd
     snpdata$relatedness[["matrix"]] = rmatrix
+    system(sprintf("rm -rf %s", paste(dir,"/ibd")))
     snpdata
 }
 
