@@ -15,9 +15,8 @@
 vcf.file: the input vcf file (required)
 meta.file: the metadata file (required)
 output.dir: the path to the folder where the output files will be stored (optional)
-gaf: the gene ontology annotation file (optional). this could be downloaded [here](https://plasmodb.org/plasmo/app/downloads/Current_Release/Pfalciparum3D7/gaf/)
-gff: the gene annotation file (optional). this could be downloaded [here](https://plasmodb.org/plasmo/app/downloads/Current_Release/Pfalciparum3D7/gff/)
-```
+gaf: the gene ontology annotation file (optional). this could be downloaded from the PlasmoDB website
+gff: the gene annotation file (optional). this could be downloaded from the PlasmoDB website
 
 # RETURN
 a SNPdata object with the following elements:
