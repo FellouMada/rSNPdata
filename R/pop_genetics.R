@@ -76,7 +76,7 @@ calculate_LD = function(snpdata, min.r2=0.2, inter.chrom=FALSE, chroms=NULL){
         idx1 = which(ld$CHR1 %in% chroms)
         idx2 = which(ld$CHR2 %in% chroms)
         idx = unique(c(idx1, idx2))
-        ld = l[idx,]
+        ld = ld[idx,]
     }
 
     snpdata$LD=ld
