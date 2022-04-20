@@ -7,17 +7,21 @@
 snpdata=get_snpdata(vcf.file = "file.vcf.gz", meta.file = "file.txt", output.dir = "/path/to/output/dir")
 }
 \arguments{
-\item{vcf.file}{the input VCF file}
+\item{vcf.file}{the input VCF file (required)}
 
-\item{meta.file}{the metadata file}
+\item{meta.file}{the metadata file (required)}
 
-\item{output.dir}{the path to the folder where to store the output files}
+\item{output.dir}{the path to the folder where to store the output files (optional)}
+
+\item{gaf}{the gene ontology annotation file (optional). this could be downloaded from https://plasmodb.org/plasmo/app/downloads/Current_Release/Pfalciparum3D7/gaf/}
+
+\item{gff}{the gene annotation file (optional). this could be downloaded from https://plasmodb.org/plasmo/app/downloads/Current_Release/Pfalciparum3D7/gff/}
 }
 \value{
 an object of class SNPdata with 5 elements
 \enumerate{
   \item meta: a data frame that contains the sample's metadata
-  \item details: a data frame with SNPs genomic coordinates, fraction of missing data per SNP
+  \item details: a data frame with SNPs genomic coordinates, fraction of missing data per SNP and their correspondent gene names and descriptions
   \item GT: an integer matrix with the genotype data. 0='reference allele', 1='alternate allele', 2='mixed allele', NA='missing allele'
   \item vcf: the vcf file from which the data is generated
   \item index: an integer

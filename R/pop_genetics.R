@@ -63,7 +63,7 @@ calculate_wcFst = function(snpdata, from=NULL, groups=NULL){
 calculate_LD = function(snpdata, min.r2=0.2, inter.chrom=FALSE, chroms=NULL){
     out = paste0(dirname(snpdata$vcf),"/tmp_ld")
     if(inter.chrom){
-        cat("inter-chromosomal LD will be calculated between sites on ",paste(chroms, collapse = ","))
+        cat("inter-chromosomal LD will be calculated between sites on",paste(chroms, collapse = ","))
         system(sprintf("vcftools --gzvcf %s --out %s --min-r2 %s --interchrom-geno-r2", snpdata$vcf, out, min.r2))
     }else{
         system(sprintf("vcftools --gzvcf %s --out %s --min-r2 %s --geno-r2", snpdata$vcf, out, min.r2))
@@ -94,7 +94,7 @@ calculate_IBS = function(snpdata, mat.name="GT"){
     X = t(snpdata[[mat.name]])
     y = matrix(NA, nrow = nrow(X), ncol = nrow(X))
     # colnames(y) = rownames(y) = rownames(X)
-    pb = txtProgressBar(min = 0, max = nrow(X), initial = 0,style = 3)
+    pb = txtProgressBar(min = 0, max = nrow(X), initial = 0,style = 3, char = "*")
     for(i in 1:nrow(X)){
         for(j in 1:nrow(X)){
             m = X[i,]-X[j,]
@@ -416,14 +416,14 @@ getGenotypes = function(ped.map, reference.ped.map=NULL, maf=0.01, isolate.max.m
         input.genotypes.v1 <- cbind(input.genotypes.v0[,c(1:4)],pop.allele.freq,input.genotypes.v0[,c(5:ncol(input.genotypes.v0))])
     }
     colnames(input.genotypes.v1) <- c("chr", "snp_id", "pos_M","pos_bp", "freq", isolate.names)
-    cat(paste("Begin filtering of ",length(isolate.names)," isolates and ",nrow(input.genotypes.v1)," SNPs...\n",sep=""))
+    cat(paste("Begin filtering of",length(isolate.names),"isolates and ",nrow(input.genotypes.v1),"SNPs...\n",sep=""))
 
 
     # remove SNPs with low population MAF
     input.genotypes.v2 <- subset(input.genotypes.v1, pop.allele.freq <= (1-maf) & pop.allele.freq >= maf) #removing SNPs with AF>0.99 and AF<0.01
     if (nrow(input.genotypes.v2) == 0)
         stop("0 SNPs remain after MAF removal")
-    cat(paste(nrow(input.genotypes.v2)," SNPs remain after MAF removal...\n",sep=""))
+    cat(paste(nrow(input.genotypes.v2),"SNPs remain after MAF removal...\n",sep=""))
 
 
     # remove snps with high missingness
@@ -431,7 +431,7 @@ getGenotypes = function(ped.map, reference.ped.map=NULL, maf=0.01, isolate.max.m
     input.genotypes.v3 <- input.genotypes.v2[snp.missingness <= snp.max.missing,]
     if (nrow(input.genotypes.v3) == 0)
         stop("0 SNPs remain after missingness removal")
-    cat(paste(nrow(input.genotypes.v3)," SNPs remain after missingness removal...\n",sep=""))
+    cat(paste(nrow(input.genotypes.v3),"SNPs remain after missingness removal...\n",sep=""))
 
 
     # remove samples with high missingness
@@ -450,7 +450,7 @@ getGenotypes = function(ped.map, reference.ped.map=NULL, maf=0.01, isolate.max.m
     if ((ncol(input.genotypes.v4)-5) == 0) {
         stop("0 samples remain after missingness removal")
     }
-    cat(paste(ncol(input.genotypes.v4)-5," isolates remain after missingness removal...\n",sep=""))
+    cat(paste(ncol(input.genotypes.v4)-5,"isolates remain after missingness removal...\n",sep=""))
 
 
     return.genotypes <- list(sample.keep, input.genotypes.v4)
@@ -478,15 +478,16 @@ calculate_relatedness = function(snpdata, mat.name="Imputed", from="Location", s
     # sourceCpp("src/hmmloglikelihood.cpp")
     details = snpdata$details
     metadata = snpdata$meta
-    if((mat.name=="Imputed") & (!("Imputed" %in% names(snpdata))){
-        mat.name="GT"
-        cat("Imputing the missing genotypes\n")
-        snpdata = impute_missing_genotypes(snpdata, genotype=mat.name, nsim=10)
-    }
     if(mat.name=="GT" | mat.name=="Phased"){
         cat("Imputing the missing genotypes\n")
         snpdata = impute_missing_genotypes(snpdata, genotype=mat.name, nsim=10)
     }
+    if((mat.name=="Imputed") & (!("Imputed" %in% names(snpdata)))){
+        mat.name="GT"
+        cat("Imputing the missing genotypes\n")
+        snpdata = impute_missing_genotypes(snpdata, genotype=mat.name, nsim=10)
+    }
+
     # mat.name = "Imputed"
     mat = snpdata[["Imputed"]]
     if(!is.null(groups) & all(groups %in% unique(metadata[[from]]))){
@@ -503,7 +504,7 @@ calculate_relatedness = function(snpdata, mat.name="Imputed", from="Location", s
         site1 = sites[ii]
         for(jj in ii:length(sites)){
             site2 = sites[jj]
-            cat("calculating the relatedness between ",site1," and ",site2,"\n")
+            cat("calculating the relatedness between",site1,"and",site2,"\n")
             ibd = rbind(ibd, gen_mles(genotypes, site1, site2, f=0.3, dir))
         }
     }

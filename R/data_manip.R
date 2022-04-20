@@ -8,19 +8,22 @@ require("parallel")
 require("isoRelate")
 require("Rfast")
 require("utils")
+require("GenomicRanges")
 
 
 
 #' Generate the SNPdata object
 #'
 #' This function generate the input data needed for whole genome SNP data genotyped from malaria parasite
-#' @param vcf.file the input VCF file
-#' @param meta.file the metadata file
-#' @param output.dir the path to the folder where to store the output files
+#' @param vcf.file the input VCF file (required)
+#' @param meta.file the metadata file (required)
+#' @param output.dir the path to the folder where to store the output files (optional)
+#' @param gaf the gene ontology annotation file (optional). this could be downloaded from https://plasmodb.org/plasmo/app/downloads/Current_Release/Pfalciparum3D7/gaf/
+#' @param gff the gene annotation file (optional). this could be downloaded from https://plasmodb.org/plasmo/app/downloads/Current_Release/Pfalciparum3D7/gff/
 #' @return an object of class SNPdata with 5 elements
 #' \enumerate{
 #'   \item meta: a data frame that contains the sample's metadata
-#'   \item details: a data frame with SNPs genomic coordinates, fraction of missing data per SNP
+#'   \item details: a data frame with SNPs genomic coordinates, fraction of missing data per SNP and their correspondent gene names and descriptions
 #'   \item GT: an integer matrix with the genotype data. 0='reference allele', 1='alternate allele', 2='mixed allele', NA='missing allele'
 #'   \item vcf: the vcf file from which the data is generated
 #'   \item index: an integer
@@ -29,13 +32,19 @@ require("utils")
 #' @usage snpdata=get_snpdata(vcf.file = "file.vcf.gz", meta.file = "file.txt", output.dir = "/path/to/output/dir")
 #' @export
 
-get_snpdata = function(vcf.file=NA, meta.file=NA, output.dir=NA){
-    if(is.na(vcf.file)) stop("Please provide an input VCF file")
-    if(!file.exists(vcf.file)) stop(vcf.file, "not found!")
-    if(is.na(meta.file)) stop("Please provide a metadata file")
-    if(!file.exists(meta.file)) stop(meta.file, "not found!")
-    if(is.na(output.dir)) stop("Please provide an output directory")
-    if(!dir.exists(output.dir)) system(sprintf("mkdir -p %s",output.dir))
+get_snpdata = function(vcf.file=NULL, meta.file=NULL, output.dir=NULL, gaf=NULL, gff=NULL){
+    if(is.null(vcf.file)) stop(" Please provide an input VCF file")
+    if(!is.null(vcf.file) & !file.exists(vcf.file)) stop(vcf.file, " not found!")
+    if(is.null(meta.file)) stop(" Please provide a metadata file")
+    if(!is.null(meta.file) & !file.exists(meta.file)) stop(meta.file, " not found!")
+    if(is.null(output.dir)) output.dir = tempdir()
+    if(!is.null(output.dir) & !dir.exists(output.dir)) system(sprintf("mkdir -p %s",output.dir))
+    if(is.null(gaf)) cat("rSNPdata object will created without annotation\n")
+    else{
+        if(!file.exists(gaf)) stop(gaf, " not found")
+        if(!file.exists(gff)) stop(gff, " not found")
+    }
+
 
     ## get the sample IDs
     ids = paste0(output.dir,'/','SampleIDs.txt')
@@ -65,6 +74,14 @@ get_snpdata = function(vcf.file=NA, meta.file=NA, output.dir=NA){
     meta = add_metadata(sampleIDs,meta.file)
     meta$percentage.missing.sites = colSums(is.na(snps))/nrow(snps)
     details$percentage.missing.samples = rowSums(is.na(snps))/ncol(snps)
+    if(!is.null(gaf) & !is.null(gff)){
+        bed = paste0(dirname(vcf),"/file.bed")
+        system(sprintf("gff2bed < %s > %s", gff, bed))
+        bed = fread(bed, nThread = 4, sep = "\t")
+        go = fread(gaf, nThread = 4, sep="\t")
+        genomic.coordinates = details %>% select(Chrom,Pos)
+        details$gene = get_gene_annotation(genomic.coordinates, go, bed)
+    }
 
     snp.table = list(meta, details, snps, vcf.file, index=0)
     names(snp.table) = c("meta","details","GT","vcf","index")
@@ -83,6 +100,46 @@ add_metadata = function(sampleIDs, metadata){
     meta
 }
 
+get_gene_annotation = function(genomic.coordinates, go, bed){
+    genes = as.character(mclapply(bed$V10, get_clean_name, mc.cores=4))
+    genes = as.character(mclapply(genes, rm.prf1, mc.cores=4))
+    genes = as.character(mclapply(genes, rm.prf2, mc.cores=4))
+    genes = as.character(mclapply(genes, rm.suf, mc.cores=4))
+    genes = data.table(genes)
+    genes = cbind(bed$V1, bed$V2, bed$V3, genes)
+    names(genes) = c("chrom","start","end","gene_id")
+    go = subset(go, select = c(2,10))
+    names(go) = c("gene_id","gene_name")
+    setkey(go,"gene_id")
+    setkey(genes, "gene_id")
+
+    test = genes %>% left_join(go)
+    test = distinct(test, chrom, start,end,gene_id,gene_name)
+    resultat = gene_annotation(test,genomic.coordinates)
+    resultat = gsub("NA:","",resultat)
+    resultat
+}
+
+get_clean_name = function(y){unlist(strsplit(unlist(strsplit(y,"ID="))[2],";"))[1]}
+rm.prf1 = function(x){as.character(gsub("exon_","",x))}
+rm.prf2 = function(x){as.character(gsub("utr_","",x))}
+rm.suf = function(x){as.character(unlist(strsplit(x,".",fixed = TRUE))[1])}
+
+gene_annotation = function(target_gtf,genomic.coordinates){
+    names(genomic.coordinates)=c("chrom","start")
+    genomic.coordinates$end = genomic.coordinates$start
+    #genomic.coordinates$index=1:nrow(genomic.coordinates)
+    subject = IRanges(target_gtf$start, target_gtf$end)
+    query = IRanges(genomic.coordinates$start, genomic.coordinates$end)
+    my.overlaps = data.table(as.matrix(findOverlaps(query, subject, type="within")))
+    my.overlaps$gene = target_gtf$gene_name[my.overlaps$subjectHits]
+    the.genes = my.overlaps[,paste(unique(gene), collapse = ":"), by=queryHits]
+    names(the.genes)[2]="gene"
+    genomic.coordinates$gene=NA
+    genomic.coordinates$gene[the.genes$queryHits]=the.genes$gene
+    return(genomic.coordinates$gene)
+}
+
 #' Print SNPdata
 #' @param snpdata SNPdata object
 #' @return NULL
@@ -92,7 +149,7 @@ print.SNPdata=function(snpdata){
     print(head(snpdata$meta))
     print(head(snpdata$details))
     cat(sprintf("Data contains: %d samples for %d snp loci\n",dim(snpdata$GT)[2],dim(snpdata$GT)[1]))
-    cat(sprintf("Data is generated from: %s \n",snpdata$vcf))
+    cat(sprintf("Data is generated from: %s\n",snpdata$vcf))
 }
 
 #' Filter loci and samples (requires bcftools and tabix to be installed)
@@ -133,7 +190,7 @@ filter_snps_samples=function (snpdata, min.qual=10, max.missing.sites=0.2, max.m
 
         idx = which(snpdata$meta$percentage.missing.sites<=max.missing.sites)
         if(length(idx)>0 & length(idx)<nrow(snpdata$meta)){
-            cat("the following samples will be removed: \n",paste(snpdata$meta$sample,collapse = "\n"))
+            cat("the following samples will be removed:\n",paste(snpdata$meta$sample,collapse = "\n"))
             snpdata$meta = snpdata$meta[idx,]
             # x = x[,idx]
             fwrite(snpdata$meta$sample, paste0(output.dir,"/samples_to_be_dropped.txt"), col.names = FALSE, row.names = FALSE, quote = FALSE, sep = "\t", nThread = 4)
@@ -275,7 +332,7 @@ phase_mixed_genotypes = function(snpdata, nsim=100){
     path = paste0(dirname(vcf),"/phasing")
     system(sprintf("mkdir -p %s", path))
     correlations = numeric(length = nsim)
-    pb = txtProgressBar(min = 0, max = nsim, initial = 0,style = 3)
+    pb = txtProgressBar(min = 0, max = nsim, initial = 0,style = 3, char = "*")
     for(i in 1:nsim){
         # cat("running simulation ",i,"\n")
         tmp.snpdata = snpdata
@@ -348,13 +405,13 @@ phaseData = function(genotype, depth){
 #' @usage snpdata = impute_missing_genotypes(snpdata)
 #' @export
 impute_missing_genotypes = function(snpdata, genotype="Phased", nsim=100){
-    cat("the mixed genotypes will be phased from ",genotype," table\n")
+    cat("the missing genotypes will be imputed from",genotype,"table\n")
     field=genotype
     # genotype = snpdata[[genotype]]
     path = paste0(dirname(snpdata$vcf),"/imputing")
     system(sprintf("mkdir -p %s", path))
     correlations = numeric(length = nsim)
-    pb = txtProgressBar(min = 0, max = nsim, initial = 0,style = 3)
+    pb = txtProgressBar(min = 0, max = nsim, initial = 0,style = 3, char = "*")
     for(i in 1:nsim){
         # cat("running simulation ",i,"\n")
         tmp.snpdata = snpdata
@@ -466,7 +523,7 @@ drop_snps = function(snpdata, snp.to.be.dropped=NA, chrom=NA, start=NA, end=NA){
             fwrite(f2c, tmp.file, col.names = FALSE, row.names = FALSE, quote = FALSE, sep = "\t", nThread = 4)
             snpdata$vcf = remove_snps_from_vcf(snpdata$vcf, "tmp.txt", path=dirname(snpdata$vcf), index=snpdata$index)
             system(sprintf("rm -f %s", tmp.file))
-            cat("\n",length(idx)," loci have been successfully removed")
+            cat("\n",length(idx),"loci have been successfully removed")
         }
         else{
             stop("there is no loci overlapping the specified region")
