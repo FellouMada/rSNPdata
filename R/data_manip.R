@@ -39,7 +39,7 @@ get_snpdata = function(vcf.file=NULL, meta.file=NULL, output.dir=NULL, gaf=NULL,
     if(!is.null(meta.file) & !file.exists(meta.file)) stop(meta.file, " not found!")
     if(is.null(output.dir)) output.dir = tempdir()
     if(!is.null(output.dir) & !dir.exists(output.dir)) system(sprintf("mkdir -p %s",output.dir))
-    if(is.null(gaf)) cat("rSNPdata object will created without annotation\n")
+    if(is.null(gaf)) cat("GO annotation file not provided. rSNPdata object will created without gene annotation\n")
     else{
         if(!file.exists(gaf)) stop(gaf, " not found")
         if(!file.exists(gff)) stop(gff, " not found")

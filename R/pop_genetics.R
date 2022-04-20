@@ -70,6 +70,7 @@ calculate_LD = function(snpdata, min.r2=0.2, inter.chrom=FALSE, chroms=NULL){
     }
     out = paste0(out,".geno.ld")
     system(sprintf("bgzip %s", out))
+    out = paste0(out,".gz")
     ld = fread(out, nThread = 4)
     if(!is.null(chroms)){
         idx1 = which(ld$CHR1 %in% chroms)
