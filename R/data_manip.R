@@ -1,17 +1,3 @@
-
-require("data.table")
-require("dplyr")
-require("SeqArray")
-require("moimix")
-require("statip")
-require("parallel")
-require("isoRelate")
-require("Rfast")
-require("utils")
-require("GenomicRanges")
-
-
-
 #' Generate the SNPdata object
 #'
 #' This function generate the input data needed for whole genome SNP data genotyped from malaria parasite

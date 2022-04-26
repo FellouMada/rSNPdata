@@ -6,14 +6,25 @@ Authors@R:
     person(given = "Karim",
            family = "Mané",
            role = c("aut", "cre"),
-           email = "karimanee@outlook.com")
-    person(given = "Nicholas",
-           family = "Williams",
+           email = "karimanee@outlook.com",
+           comment = c(ORCID = "https://orcid.org/0000-0002-9892-2999"))
+    person(given = "David",
+           family = "Jeffries",
            role = c("aut", "cre"),
-           email = "nw14@sanger.ac.uk",
-           comment = c(ORCID = "https://orcid.org/0000-0003-3989-9167"))
+           email = "djeffries@mrc.gm")
 Maintainer: The package maintainer <karimanee@outlook.com>
 Description: handle raw data from vcf file, perform data analysis
+Depends:
+  data.table,
+  dplyr,
+  SeqArray,
+  moimix,
+  statip,
+  parallel,
+  isoRelate,
+  Rfast,
+  utils,
+  GenomicRanges
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
