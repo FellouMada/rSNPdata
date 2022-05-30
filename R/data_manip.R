@@ -25,12 +25,25 @@ get_snpdata = function(vcf.file=NULL, meta.file=NULL, output.dir=NULL, gaf=NULL,
     if(!is.null(meta.file) & !file.exists(meta.file)) stop(meta.file, " not found!")
     if(is.null(output.dir)) output.dir = tempdir()
     if(!is.null(output.dir) & !dir.exists(output.dir)) system(sprintf("mkdir -p %s",output.dir))
-    if(is.null(gaf)) cat("GO annotation file not provided. rSNPdata object will created without gene annotation\n")
-    else{
-        if(!file.exists(gaf)) stop(gaf, " not found")
-        if(!file.exists(gff)) stop(gff, " not found")
+    if(!is.null(gaf)){
+        if(file.exists(gaf)) go = fread(gaf, nThread = 4, sep="\t")
+        else stop(gaf, " not found")
+    }else{
+        gaf=system.file("extdata", "Pf_gene_ontology.txt", package="rSNPdata")
+        go = fread(gaf, nThread = 4, sep="\t")
     }
-
+    if(!is.null(gff)){
+        if(file.exists(gff)){
+            bed = paste0(dirname(vcf),"/file.bed")
+            system(sprintf("gff2bed < %s > %s", gff, bed))
+            bed = fread(bed, nThread = 4, sep = "\t")
+        }else{
+            stop(gff, " not found")
+        }
+    }else{
+        gff=system.file("extdata", "file.bed", package="rSNPdata")
+        bed = fread(gff, nThread = 4, sep = "\t")
+    }
 
     ## get the sample IDs
     ids = paste0(output.dir,'/','SampleIDs.txt')
@@ -60,14 +73,9 @@ get_snpdata = function(vcf.file=NULL, meta.file=NULL, output.dir=NULL, gaf=NULL,
     meta = add_metadata(sampleIDs,meta.file)
     meta$percentage.missing.sites = colSums(is.na(snps))/nrow(snps)
     details$percentage.missing.samples = rowSums(is.na(snps))/ncol(snps)
-    if(!is.null(gaf) & !is.null(gff)){
-        bed = paste0(dirname(vcf),"/file.bed")
-        system(sprintf("gff2bed < %s > %s", gff, bed))
-        bed = fread(bed, nThread = 4, sep = "\t")
-        go = fread(gaf, nThread = 4, sep="\t")
-        genomic.coordinates = details %>% select(Chrom,Pos)
-        details$gene = get_gene_annotation(genomic.coordinates, go, bed)
-    }
+
+    genomic.coordinates = details %>% select(Chrom,Pos)
+    details$gene = get_gene_annotation(genomic.coordinates, go, bed)
 
     snp.table = list(meta, details, snps, vcf.file, index=0)
     names(snp.table) = c("meta","details","GT","vcf","index")
