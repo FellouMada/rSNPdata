@@ -13,9 +13,9 @@ snpdata=get_snpdata(vcf.file = "file.vcf.gz", meta.file = "file.txt", output.dir
 
 \item{output.dir}{the path to the folder where to store the output files (optional)}
 
-\item{gaf}{the gene ontology annotation file (optional). this could be downloaded from https://plasmodb.org/plasmo/app/downloads/Current_Release/Pfalciparum3D7/gaf/}
+\item{gaf}{the gene ontology annotation file (optional). If not provided, the default file obtained from https://plasmodb.org/plasmo/app/downloads/Current_Release/Pfalciparum3D7/gaf/ will be used}
 
-\item{gff}{the gene annotation file (optional). this could be downloaded from https://plasmodb.org/plasmo/app/downloads/Current_Release/Pfalciparum3D7/gff/}
+\item{gff}{the gene annotation file (optional). If not provided, the default file obtained from https://plasmodb.org/plasmo/app/downloads/Current_Release/Pfalciparum3D7/gff/ will be used}
 }
 \value{
 an object of class SNPdata with 5 elements
