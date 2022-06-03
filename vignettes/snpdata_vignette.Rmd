@@ -15,21 +15,9 @@ date: `r format(Sys.Date(), "%d/%m/%Y")`
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE,comment = "#>")
-require("data.table")
-require("dplyr")
-require("SeqArray")
-require("moimix")
-require("statip")
-require("parallel")
-require("isoRelate")
-require("Rfast")
-require("utils")
-require("GenomicRanges")
 vcf="/Users/km28/Documents/Karim/Packages/Input_Data.vcf.gz"
 metadata="/Users/km28/Documents/Karim/Packages/SampleMetadata.txt"
 outDir="/Users/km28/Documents/Karim/Packages/Test"
-gaf="/Users/km28/Documents/Karim/Packages/Pf_gene_ontology.txt"
-gff="/Users/km28/Documents/Karim/Packages/PlasmoDB-56_Pfalciparum3D7.gff"
 ```
 
 ## Install   
@@ -45,12 +33,11 @@ the functions in this package require a `SNPdata` object. This can be generated 
 1. the input VCF file (required)    
 2. the file with the samples metadata (required)    
 3. the path to the folder where the output files will be stored (optional)  
-4. the gene ontology annotation file (optional). It can be downloaded from https://plasmodb.org/plasmo/app/downloads/Current_Release/Pfalciparum3D7/gaf/   
-5. the gene annotation file (optional). It can be obtained from https://plasmodb.org/plasmo/app/downloads/Current_Release/Pfalciparum3D7/gff/    
-If you don't have the `gaf` and `gff` file, these can be set at `NULL` or ignored. In that case, the gene annotation and description column will be missing from the `snpdata$details` data frame.   
+4. the gene ontology annotation file (optional). If not provided, the default file that was downloaded from https://plasmodb.org/plasmo/app/downloads/Current_Release/Pfalciparum3D7/gaf/ will be used    
+5. the gene annotation file (optional). If not provided, the default file that was downloaded from https://plasmodb.org/plasmo/app/downloads/Current_Release/Pfalciparum3D7/gff/ will be used
 type `?get_snpdata` for more details      
 ```{r eval=FALSE}
-snpdata=get_snpdata(vcf.file = vcf, meta.file = metadata, output.dir = outDir, gaf = gaf, gff = gff)
+snpdata=get_snpdata(vcf.file = vcf, meta.file = metadata, output.dir = outDir, gaf = NULL, gff = NULL)
 ```
 
 ## print the SNPdata object     

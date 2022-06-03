@@ -4,8 +4,8 @@
 #' @param vcf.file the input VCF file (required)
 #' @param meta.file the metadata file (required)
 #' @param output.dir the path to the folder where to store the output files (optional)
-#' @param gaf the gene ontology annotation file (optional). this could be downloaded from https://plasmodb.org/plasmo/app/downloads/Current_Release/Pfalciparum3D7/gaf/
-#' @param gff the gene annotation file (optional). this could be downloaded from https://plasmodb.org/plasmo/app/downloads/Current_Release/Pfalciparum3D7/gff/
+#' @param gaf the gene ontology annotation file (optional). If not provided, the default file obtained from https://plasmodb.org/plasmo/app/downloads/Current_Release/Pfalciparum3D7/gaf/ will be used
+#' @param gff the gene annotation file (optional). If not provided, the default file obtained from https://plasmodb.org/plasmo/app/downloads/Current_Release/Pfalciparum3D7/gff/ will be used
 #' @return an object of class SNPdata with 5 elements
 #' \enumerate{
 #'   \item meta: a data frame that contains the sample's metadata
