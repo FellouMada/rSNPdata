@@ -14,6 +14,7 @@ Authors@R:
            email = "djeffries@mrc.gm")
 Maintainer: The package maintainer <karimanee@outlook.com>
 Description: handle raw data from vcf file, perform data analysis
+biocViews:
 Depends:
   data.table,
   dplyr,
