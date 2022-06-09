@@ -2,16 +2,13 @@
 R package to manage and analyse Plasmodium falciparum whole genome SNPs data.     
 
 ## requirements      
-before installing this package, make sure the following tools and packages are installed:      
+before installing this package, make sure the following tools are installed:      
 #### tools     
 [bcftools](http://www.htslib.org/download/)    
 [tabix](http://www.htslib.org/doc/tabix.html)  
 [vcflib](https://github.com/vcflib/vcflib)    
 [vcftools](http://vcftools.sourceforge.net/)    
 [BEDOPS](https://bedops.readthedocs.io/en/latest/index.html)
-
-#### R packages     
-[data.table](https://cran.r-project.org/web/packages/data.table/index.html),[dplyr](https://cran.r-project.org/web/packages/dplyr/index.html),[SeqArray](https://www.bioconductor.org/packages/release/bioc/html/SeqArray.html),[moimix](https://github.com/bahlolab/moimix),[statip](https://cran.r-project.org/web/packages/statip/index.html),[parallel](https://stat.ethz.ch/R-manual/R-devel/library/parallel/doc/parallel.pdf),[isoRelate](https://github.com/bahlolab/isoRelate),[Rfast](https://cran.r-project.org/web/packages/Rfast/index.html),[utils](https://cran.r-project.org/web/packages/R.utils/index.html)
 
 ---
 Index:
